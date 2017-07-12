@@ -20,6 +20,7 @@ data M6502 = native org.javatari.general.m6502.M6502 where
 data Trick2600 = native org.javatari.general.board.Trick2600 where
      pure native getReads :: Trick2600 -> JArray Int
      pure native getWrites :: Trick2600 -> JArray Int
+     pure native readByte :: Trick2600 -> Int -> Int
      pure native new :: String -> Trick2600
 
 formatReadsInner :: Int -> Int -> JArray Int -> String
@@ -38,28 +39,28 @@ formatReads a =
         "[" ++ (formatReadsInner 0 l a) ++ "]"
 
 formatRegsInner :: [String] -> String
-formatRegsInner a =
-   case a of
-     hd : [] -> hd
+formatRegsInner l =
+   case l of
+     [] -> ""
      hd : tl ->
            let rest = formatRegsInner tl in
            if rest /= "" then
-               if hd /= "" then
-                   hd ++ ", " ++ rest
-               else
-                   rest
+               hd ++ ", " ++ rest
            else
                hd
 
-formatRegs a =
-    "[" ++ (formatRegsInner (listFromArray a)) ++ "]"
+formatRegs l =
+    "[" ++ (formatRegsInner l) ++ "]"
 
 formatInstruction :: M6502 -> String
 formatInstruction cpu =
     let i = M6502.getCurrentInstruction cpu in
-    let reads = Trick2600.getReads (M6502.getCurrentBus cpu) in
-    let writes = Trick2600.getWrites (M6502.getCurrentBus cpu) in
-    let isrc = M6502.getInstructionSources cpu in
+    let bus = M6502.getCurrentBus cpu in
+    let reads = Trick2600.getReads bus in
+    let writes = Trick2600.getWrites bus in
+    let isrc =
+            filter ((/=) "") (listFromArray (M6502.getInstructionSources cpu))
+    in
     (M6502.printState cpu) ++ " " ++ (Instruction.toString i) ++ " " ++ (formatReads reads) ++ " " ++ (formatReads writes) ++ " " ++ (formatRegs isrc)
 
 doInstructions n cpu =
@@ -76,4 +77,4 @@ main _ =
     let trick = Trick2600.new "snoop/Dragster.bin" in
     let cpu = M6502.withBus (M6502.new ()) trick in
     do
-      doInstructions 5000 (M6502.next cpu)
+      doInstructions 100000 (M6502.next cpu)
