@@ -19,7 +19,7 @@ public final class PHA extends Instruction {
 	@Override
 	public void execute() {
 		// Does not perform the dummy PC + 1 read
-		cpu.pushByte(cpu.A);
+		cpu.pushByte(cpu.getA());
 	}
 	
 

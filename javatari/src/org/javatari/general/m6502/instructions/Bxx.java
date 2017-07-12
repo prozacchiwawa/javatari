@@ -22,10 +22,10 @@ public final class Bxx extends Instruction {
 	@Override
 	public int fetch() {
 		newPC = cpu.fetchRelativeAddress();		// Reads operand regardless of the branch being taken or not
-		if (bit == bZERO) 			{ branch = cpu.ZERO == cond; }
-		else if (bit == bNEGATIVE)	{ branch = cpu.NEGATIVE == cond; }
-		else if (bit == bCARRY)		{ branch = cpu.CARRY == cond; }
-		else if (bit == bOVERFLOW)	{ branch = cpu.OVERFLOW == cond; }
+		if (bit == bZERO) 			{ branch = cpu.isZERO() == cond; }
+		else if (bit == bNEGATIVE)	{ branch = cpu.isNEGATIVE() == cond; }
+		else if (bit == bCARRY)		{ branch = cpu.isCARRY() == cond; }
+		else if (bit == bOVERFLOW)	{ branch = cpu.isOVERFLOW() == cond; }
 		else throw new IllegalStateException("Bxx Invalid StatusBit: " + bit);
 
 		return branch ? (cpu.pageCrossed ? 4:3) : 2; 

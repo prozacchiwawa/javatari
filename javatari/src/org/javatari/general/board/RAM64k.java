@@ -13,7 +13,7 @@ public final class RAM64k implements BUS16Bits {
 	public RAM64k(byte[] content) {
 		System.arraycopy(content, 0, bytes, 0, content.length);
 	}
-	
+
 	@Override
 	public byte readByte(int address) {		
 		return bytes[address & 0xffff];

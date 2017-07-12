@@ -1,0 +1,43 @@
+--- Demonstration of terminal input/output
+module examples.ITest where
+
+import Prelude.PreludeArrays
+import Test.QuickCheck
+
+data Instruction = native org.javatari.general.m6502.Instruction where
+     pure native fetch :: Instruction -> Int
+     pure native toString :: Instruction -> String
+
+data M6502 = native org.javatari.general.m6502.M6502 where
+     pure native next :: M6502 -> M6502
+     pure native getInstructionSources :: M6502 -> JArray String
+     pure native withBus :: M6502 -> Trick2600 -> M6502
+     pure native getCurrentBus :: M6502 -> Trick2600
+     pure native getCurrentInstruction :: M6502 -> Instruction
+     pure native printState :: M6502 -> String
+     pure native new :: () -> M6502
+
+data Trick2600 = native org.javatari.general.board.Trick2600 where
+     pure native getReads :: Trick2600 -> JArray Boolean
+     pure native getWrites :: Trick2600 -> JArray Boolean
+     pure native new :: String -> Trick2600
+                        
+formatInstruction :: M6502 -> String
+formatInstruction cpu =
+    let i = M6502.getCurrentInstruction cpu in
+    (M6502.printState cpu) ++ " " ++ (Instruction.toString i)
+
+doInstructions n cpu =
+    if n > 0 then
+        do
+          stdout.print $ (formatInstruction cpu) ++ "\n"
+          doInstructions (n - 1) (M6502.next cpu)
+    else
+        do
+          pure ()
+                      
+main _ =
+    let trick = Trick2600.new "snoop/Dragster.bin" in
+    let cpu = M6502.withBus (M6502.new ()) trick in
+    do
+      doInstructions 10 (M6502.next cpu)

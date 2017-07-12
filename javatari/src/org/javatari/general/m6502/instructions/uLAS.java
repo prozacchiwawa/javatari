@@ -21,12 +21,12 @@ public final class uLAS extends Instruction {
 	
 	@Override
 	public void execute() {
-		final byte val = (byte) (cpu.SP & cpu.bus.readByte(ea)); 
-		cpu.A = val;
-		cpu.X = val;
-		cpu.SP = val;
-		cpu.ZERO = val == 0;
-		cpu.NEGATIVE = val < 0;
+		final byte val = (byte) (cpu.getSP() & cpu.bus.readByte(ea));
+		cpu.setA(val);
+		cpu.setX(val);
+		cpu.setSP(val);
+		cpu.setZERO(val == 0);
+		cpu.setNEGATIVE(val < 0);
 	}
 
 	private int ea;

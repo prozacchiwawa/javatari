@@ -30,10 +30,10 @@ public final class uLAX extends Instruction {
 	@Override
 	public void execute() {
 		final byte val = cpu.bus.readByte(ea);
-		cpu.A = val;
-		cpu.X = val;
-		cpu.ZERO = val == 0;
-		cpu.NEGATIVE = val < 0;
+		cpu.setA(val);
+		cpu.setX(val);
+		cpu.setZERO(val == 0);
+		cpu.setNEGATIVE(val < 0);
 	}
 
 	private final int type;

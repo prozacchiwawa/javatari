@@ -21,12 +21,12 @@ public final class uASR extends Instruction {
 
 	@Override
 	public void execute() {
-		byte val = (byte) (cpu.A & cpu.bus.readByte(ea)); 
-		cpu.CARRY = (val & 0x01) > 0;		// bit 0 was set
+		byte val = (byte) (cpu.getA() & cpu.bus.readByte(ea));
+		cpu.setCARRY((val & 0x01) > 0);		// bit 0 was set
 		val = (byte) ((val & 0xff) >>> 1);
-		cpu.A = val;
-		cpu.ZERO = val == 0;
-		cpu.NEGATIVE = false;
+		cpu.setA(val);
+		cpu.setZERO(val == 0);
+		cpu.setNEGATIVE(false);
 	}
 
 	private int ea;

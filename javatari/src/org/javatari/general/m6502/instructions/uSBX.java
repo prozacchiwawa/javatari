@@ -21,15 +21,15 @@ public final class uSBX extends Instruction {
 
 	@Override
 	public void execute() {
-		byte b = (byte) (cpu.A & cpu.X);
+		byte b = (byte) (cpu.getA() & cpu.getX());
 		int uB = M6502.toUnsignedByte(b);
 		int uVal = M6502.toUnsignedByte(cpu.bus.readByte(ea)); 
 		byte newX = (byte)(uB - uVal);
-		cpu.X = newX;
+		cpu.setX(newX);
 		
-		cpu.CARRY = uB >= uVal;
-		cpu.ZERO = newX == 0;
-		cpu.NEGATIVE = newX < 0;
+		cpu.setCARRY(uB >= uVal);
+		cpu.setZERO(newX == 0);
+		cpu.setNEGATIVE(newX < 0);
 	}
 
 	private int ea;

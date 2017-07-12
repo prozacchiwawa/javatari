@@ -1,0 +1,3 @@
+#!/bin/sh
+
+exec java -cp .:frege3.24-7.100.jar:./out/artifacts/javatari_jar/javatari.jar "${@}"

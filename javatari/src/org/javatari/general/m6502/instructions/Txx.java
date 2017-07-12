@@ -24,21 +24,21 @@ public final class Txx extends Instruction {
 	@Override
 	public void execute() {
 		final byte val;
-		if (source == Register.rA) 			val = cpu.A;
-		else if (source == Register.rX) 	val = cpu.X;
-		else if (source == Register.rY) 	val = cpu.Y;
-		else if (source == Register.rSP) 	val = cpu.SP;
+		if (source == Register.rA) 			val = cpu.getA();
+		else if (source == Register.rX) 	val = cpu.getX();
+		else if (source == Register.rY) 	val = cpu.getY();
+		else if (source == Register.rSP) 	val = cpu.getSP();
 		else throw new IllegalStateException("Txx Invalid Source Register: " + source);
 
-		if (dest == Register.rA) 		cpu.A = val;
-		else if (dest == Register.rX) 	cpu.X = val;
-		else if (dest == Register.rY) 	cpu.Y = val;
-		else if (dest == Register.rSP) 	cpu.SP = val;
+		if (dest == Register.rA) 		cpu.setA(val);
+		else if (dest == Register.rX) 	cpu.setX(val);
+		else if (dest == Register.rY) 	cpu.setY(val);
+		else if (dest == Register.rSP) 	cpu.setSP(val);
 		else throw new IllegalStateException("Txx Invalid Destination Register: " + dest);
 
 		if (dest != rSP) {		// Does not affect Status Bits when transferring to SP
-			cpu.ZERO = val == 0;
-			cpu.NEGATIVE = val < 0;
+			cpu.setZERO(val == 0);
+			cpu.setNEGATIVE(val < 0);
 		}
 	}
 

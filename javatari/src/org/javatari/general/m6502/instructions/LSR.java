@@ -29,18 +29,18 @@ public final class LSR extends Instruction {
 	public void execute() {
 		// Special case for ACC
 		if (type == ACC) {
-			byte val = cpu.A;
-			cpu.CARRY = (val & 0x01) > 0;		// bit 0 was set
+			byte val = cpu.getA();
+			cpu.setCARRY((val & 0x01) > 0);		// bit 0 was set
 			val = (byte) ((val & 0xff) >>> 1);
-			cpu.A = val;
-			cpu.ZERO = val == 0;
-			cpu.NEGATIVE = false;
+			cpu.setA(val);
+			cpu.setZERO(val == 0);
+			cpu.setNEGATIVE(false);
 		} else {
 			byte val = cpu.bus.readByte(ea); 
-			cpu.CARRY = (val & 0x01) != 0;		// bit 0 was set
+			cpu.setCARRY((val & 0x01) != 0);		// bit 0 was set
 			val = (byte) ((val & 0xff) >>> 1);
-			cpu.ZERO = val == 0;
-			cpu.NEGATIVE = false;
+			cpu.setZERO(val == 0);
+			cpu.setNEGATIVE(false);
 			cpu.bus.writeByte(ea, val);
 		}
 	}

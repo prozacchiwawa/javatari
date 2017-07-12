@@ -26,8 +26,8 @@ public final class DEC extends Instruction {
 	public void execute() {
 		final byte val = (byte) (cpu.bus.readByte(ea) - 1); 
 		cpu.bus.writeByte(ea, val);
-		cpu.ZERO = val == 0;
-		cpu.NEGATIVE = val < 0;
+		cpu.setZERO(val == 0);
+		cpu.setNEGATIVE(val < 0);
 	}
 
 	private final int type;

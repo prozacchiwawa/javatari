@@ -31,43 +31,43 @@ public final class uRRA extends Instruction {
 	@Override
 	public void execute() {
 		byte val = cpu.bus.readByte(ea); 
-		final int oldCarry = cpu.CARRY ? 0x80 : 0;
-		cpu.CARRY = (val & 0x01) != 0;		// bit 0 was set
+		final int oldCarry = cpu.isCARRY() ? 0x80 : 0;
+		cpu.setCARRY((val & 0x01) != 0);		// bit 0 was set
 		val = (byte) (((val & 0xff) >>> 1) | oldCarry);
 		cpu.bus.writeByte(ea, val);
 
 		// Same as ADC from here
 		final int b = val;
 		final int uB = M6502.toUnsignedByte(b);
-		final int oldA = cpu.A;
+		final int oldA = cpu.getA();
 		final int uOldA = M6502.toUnsignedByte(oldA);
 
-		int aux = oldA + b + (cpu.CARRY?1:0); 
-		int uAux = uOldA + uB + (cpu.CARRY?1:0); 
+		int aux = oldA + b + (cpu.isCARRY() ?1:0);
+		int uAux = uOldA + uB + (cpu.isCARRY() ?1:0);
 
 		// ZERO flag is affected always as in Binary mode
 		final byte newA = (byte) M6502.toUnsignedByte(uAux);		// Could be aux 
-		cpu.ZERO = newA == 0;
+		cpu.setZERO(newA == 0);
 
 		// But the others flags and the ACC are computed differently in Decimal Mode
 		if (!cpu.DECIMAL_MODE) {
-			cpu.NEGATIVE = newA < 0;
-			cpu.OVERFLOW = aux > 127 || aux < -128; 
-			cpu.CARRY = uAux > 0xff;
-			cpu.A = newA; 
+			cpu.setNEGATIVE(newA < 0);
+			cpu.setOVERFLOW(aux > 127 || aux < -128);
+			cpu.setCARRY(uAux > 0xff);
+			cpu.setA(newA);
 			return;
 		}
 
 		// Decimal Mode computations
-		uAux = (uOldA & 0x0f) + (uB & 0x0f) + (cpu.CARRY?1:0);
+		uAux = (uOldA & 0x0f) + (uB & 0x0f) + (cpu.isCARRY() ?1:0);
 		if (uAux >= 0x0A) uAux = ((uAux + 0x06) & 0x0f) + 0x10;
 		aux = (byte)(uOldA & 0xf0) + (byte)(uB & 0xf0) + (byte)uAux;     // Holy shit, that was the *unsigned* operation
-		cpu.NEGATIVE = (aux & 0x80) > 0;
-		cpu.OVERFLOW = (aux > 127) | (aux < -128);
+		cpu.setNEGATIVE((aux & 0x80) > 0);
+		cpu.setOVERFLOW((aux > 127) | (aux < -128));
 		uAux = (uOldA & 0xf0) + (uB & 0xf0) + uAux;
 		if (uAux >= 0xA0) uAux += 0x60;
-		cpu.CARRY = uAux > 0xff;							
-		cpu.A = (byte) M6502.toUnsignedByte(uAux);
+		cpu.setCARRY(uAux > 0xff);
+		cpu.setA((byte) M6502.toUnsignedByte(uAux));
 	}
 
 	private final int type;

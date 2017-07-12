@@ -29,20 +29,20 @@ public final class ROL extends Instruction {
 	public void execute() {
 		// Special case for ACC
 		if (type == ACC) {
-			byte val = cpu.A;
-			int oldCarry = cpu.CARRY?1:0;
-			cpu.CARRY = val < 0;		// bit 7 was set
+			byte val = cpu.getA();
+			int oldCarry = cpu.isCARRY() ?1:0;
+			cpu.setCARRY(val < 0);		// bit 7 was set
 			val = (byte) ((val << 1) | oldCarry);
-			cpu.A = val;
-			cpu.ZERO = val == 0;
-			cpu.NEGATIVE = val < 0;
+			cpu.setA(val);
+			cpu.setZERO(val == 0);
+			cpu.setNEGATIVE(val < 0);
 		} else {
 			byte val = cpu.bus.readByte(ea); 
-			int oldCarry = cpu.CARRY?1:0;
-			cpu.CARRY = val < 0;		// bit 7 was set
+			int oldCarry = cpu.isCARRY() ?1:0;
+			cpu.setCARRY(val < 0);		// bit 7 was set
 			val = (byte) ((val << 1) | oldCarry);
-			cpu.ZERO = val == 0;
-			cpu.NEGATIVE = val < 0;
+			cpu.setZERO(val == 0);
+			cpu.setNEGATIVE(val < 0);
 			cpu.bus.writeByte(ea, val);
 		}
 	}

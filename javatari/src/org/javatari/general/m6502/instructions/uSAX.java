@@ -28,7 +28,7 @@ public final class uSAX extends Instruction {
 	@Override
 	// Some sources say it would affect N and Z flags, some say it wouldn't. Chose not to affect
 	public void execute() {
-		final byte val = (byte) (cpu.A & cpu.X);
+		final byte val = (byte) (cpu.getA() & cpu.getX());
 		cpu.bus.writeByte(ea, val);
 	}
 

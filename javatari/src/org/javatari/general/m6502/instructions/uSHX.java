@@ -21,7 +21,7 @@ public final class uSHX extends Instruction {
 	
 	@Override
 	public void execute() {
-		final byte val = (byte) (cpu.X & (byte)(((ea >>> 8) & 0xff) + 1));  // X & (High byte of address + 1) !!! 
+		final byte val = (byte) (cpu.getX() & (byte)(((ea >>> 8) & 0xff) + 1));  // X & (High byte of address + 1) !!!
 		cpu.bus.writeByte(ea, val);
 	}
 

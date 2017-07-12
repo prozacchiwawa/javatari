@@ -28,10 +28,10 @@ public final class AND extends Instruction {
 	
 	@Override
 	public void execute() {
-		final byte val = (byte) (cpu.A & cpu.bus.readByte(ea)); 
-		cpu.A = val;
-		cpu.ZERO = val == 0;
-		cpu.NEGATIVE = val < 0;
+		final byte val = (byte) (cpu.getA() & cpu.bus.readByte(ea));
+		cpu.setA(val);
+		cpu.setZERO(val == 0);
+		cpu.setNEGATIVE(val < 0);
 	}
 
 	private final int type;

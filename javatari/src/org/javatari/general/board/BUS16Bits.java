@@ -9,5 +9,4 @@ public interface BUS16Bits {
 	public byte readByte(int address);
 
 	public void writeByte(int address, byte b);
-
 }

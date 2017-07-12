@@ -102,7 +102,6 @@ public final class BUS implements BUS16Bits, ClockDriven {
 		}
 	}
 
-
 	public Cartridge cartridge;
 	public final M6502 cpu;
 	public final RAM ram;

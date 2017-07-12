@@ -23,7 +23,7 @@ public abstract class Instruction implements Serializable, Cloneable {
 		}
 	}
 
-	
+
 	protected transient M6502 cpu;
 
 	

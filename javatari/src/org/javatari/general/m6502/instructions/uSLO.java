@@ -31,14 +31,14 @@ public final class uSLO extends Instruction {
 	@Override
 	public void execute() {
 		byte val = cpu.bus.readByte(ea); 
-		cpu.CARRY = val < 0;		// bit 7 was set
+		cpu.setCARRY(val < 0);		// bit 7 was set
 		val = (byte) (val << 1);
 		cpu.bus.writeByte(ea, val);
 
-		val = (byte) (cpu.A | val);
-		cpu.A = val;
-		cpu.ZERO = val == 0;
-		cpu.NEGATIVE = val < 0;
+		val = (byte) (cpu.getA() | val);
+		cpu.setA(val);
+		cpu.setZERO(val == 0);
+		cpu.setNEGATIVE(val < 0);
 	}
 
 	private final int type;

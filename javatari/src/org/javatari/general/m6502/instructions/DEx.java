@@ -21,11 +21,11 @@ public final class DEx extends Instruction {
 	@Override
 	public void execute() {
 		final byte val;
-		if (reg == Register.rX) 		{ val = (byte) (cpu.X - 1); cpu.X = val; }
-		else if (reg == Register.rY) 	{ val = (byte) (cpu.Y - 1); cpu.Y = val; }
+		if (reg == Register.rX) 		{ val = (byte) (cpu.getX() - 1); cpu.setX(val); }
+		else if (reg == Register.rY) 	{ val = (byte) (cpu.getY() - 1); cpu.setY(val); }
 		else throw new IllegalStateException("DEx Invalid Register: " + reg);
-		cpu.ZERO = val == 0;
-		cpu.NEGATIVE = val < 0;
+		cpu.setZERO(val == 0);
+		cpu.setNEGATIVE(val < 0);
 	}
 
 	private final int reg;

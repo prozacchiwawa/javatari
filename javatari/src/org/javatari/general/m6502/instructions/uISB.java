@@ -36,23 +36,23 @@ public final class uISB extends Instruction {
 		// Same as SBC from here
 		final int b = val;
 		final int uB = M6502.toUnsignedByte(val);
-		final int oldA = cpu.A;
+		final int oldA = cpu.getA();
 		final int uOldA = M6502.toUnsignedByte(oldA);
 
-		int oldCarryNot = cpu.CARRY?0:1;
+		int oldCarryNot = cpu.isCARRY() ?0:1;
 		final int aux = oldA - b - oldCarryNot; 
 		int uAux = uOldA - uB - oldCarryNot; 
 		
 		// Flags are affected always as in Binary mode
 		byte newA = (byte) M6502.toUnsignedByte(uAux);		// Could be aux 
-		cpu.ZERO = newA == 0;
-		cpu.NEGATIVE = newA < 0;
-		cpu.OVERFLOW = aux > 127 || aux < -128; 
-		cpu.CARRY = !(uAux < 0);
+		cpu.setZERO(newA == 0);
+		cpu.setNEGATIVE(newA < 0);
+		cpu.setOVERFLOW(aux > 127 || aux < -128);
+		cpu.setCARRY(!(uAux < 0));
 
 		// But the ACC is computed differently in Decimal Mode
 		if (!cpu.DECIMAL_MODE) {
-			cpu.A = newA;
+			cpu.setA(newA);
 			return;
 		}
 
@@ -61,7 +61,7 @@ public final class uISB extends Instruction {
 		if (uAux < 0) uAux = ((uAux - 0x06) & 0x0f) - 0x10;
 		uAux = (uOldA & 0xf0) - (uB & 0xf0) + uAux;
 		if (uAux < 0) uAux -= 0x60;
-		cpu.A = (byte) M6502.toUnsignedByte(uAux);
+		cpu.setA((byte) M6502.toUnsignedByte(uAux));
 	}
 
 	private final int type;

@@ -33,9 +33,9 @@ public final class STx extends Instruction {
 
 	@Override
 	public void execute() {
-		if (reg == rA) 			cpu.bus.writeByte(ea, cpu.A);
-		else if (reg == rX) 	cpu.bus.writeByte(ea, cpu.X);
-		else if (reg == rY) 	cpu.bus.writeByte(ea, cpu.Y);
+		if (reg == rA) 			cpu.bus.writeByte(ea, cpu.getA());
+		else if (reg == rX) 	cpu.bus.writeByte(ea, cpu.getX());
+		else if (reg == rY) 	cpu.bus.writeByte(ea, cpu.getY());
 		else throw new IllegalStateException("STx Invalid Register: " + reg);
 	}
 

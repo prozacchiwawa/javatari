@@ -20,9 +20,9 @@ public final class PLA extends Instruction {
 	public void execute() {
 		cpu.dummyStackRead();
 		byte val = cpu.pullByte();
-		cpu.A = val;
-		cpu.NEGATIVE = val < 0;
-		cpu.ZERO = val == 0;
+		cpu.setA(val);
+		cpu.setNEGATIVE(val < 0);
+		cpu.setZERO(val == 0);
 	}
 	
 

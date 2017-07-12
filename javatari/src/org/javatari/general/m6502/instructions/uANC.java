@@ -21,10 +21,12 @@ public final class uANC extends Instruction {
 	
 	@Override
 	public void execute() {
-		final byte val = (byte) (cpu.A & cpu.bus.readByte(ea)); 
-		cpu.A = val;
-		cpu.ZERO = val == 0;
-		cpu.CARRY = cpu.NEGATIVE = val < 0;
+		final byte val = (byte) (cpu.getA() & cpu.bus.readByte(ea));
+		cpu.setA(val);
+		cpu.setZERO(val == 0);
+		boolean v = val < 0;
+		cpu.setNEGATIVE(v);
+		cpu.setCARRY(v);
 	}
 
 	private int ea;
