@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="javatari:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/javatari_jar</output-path>
+    <root id="archive" name="javatari.jar">
+      <element id="module-output" name="javatari" />
+      <element id="module-output" name="joy" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/joy/deploy/joy.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jnlp.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

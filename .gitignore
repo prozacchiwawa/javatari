@@ -3,4 +3,5 @@ javatari/deploy/*.jar
 javatari/deploy/SignJARs.xml
 javatari/javatarisaves/
 joy/bin/
-
+snoop
+out

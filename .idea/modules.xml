@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/javatari/javatari.iml" filepath="$PROJECT_DIR$/javatari/javatari.iml" />
+      <module fileurl="file://$PROJECT_DIR$/joy/joy.iml" filepath="$PROJECT_DIR$/joy/joy.iml" />
+    </modules>
+  </component>
+</project>

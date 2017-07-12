@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="joy">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/joy/deploy/joy.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jnlp.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
