@@ -120,16 +120,16 @@ public final class M6502 implements ClockDriven {
 		}
 		if (!RDY) return;						// CPU is halted
 		if (remainingCycles-- > 0) return;		// CPU is still "executing" remaining instruction cycles
-		currentInstruction = instructions[toUnsignedByte(bus.readByte(PC++))];	// Reads the instruction to be executed
+		currentInstruction = instructions(toUnsignedByte(bus.readByte(PC++)));	// Reads the instruction to be executed
 		remainingCycles = currentInstruction.fetch() - 1;						// One cycle was just executed already!
 	}
 
 	public void powerOn() {	// Initializes the CPU as if it were just powered on
 		PC = 0;
-		setSP(STACK_INITIAL_SP);
-		setY((byte)0);
-		setX((byte)0);
-		setA((byte)0);
+		SP = STACK_INITIAL_SP;
+		Y = 0;
+		X = 0;
+		A = 0;
 		PS((byte)0);
 		INTERRUPT_DISABLE = true;
 		RDY = true;
@@ -243,16 +243,16 @@ public final class M6502 implements ClockDriven {
 
 	public byte PS() {
 		byte b = (byte)(
-			(isNEGATIVE() ?0x80:0) | (isOVERFLOW() ?0x40:0) | (DECIMAL_MODE?0x08:0) |
-			(INTERRUPT_DISABLE?0x04:0) | (isZERO() ?0x02:0) | (isCARRY() ?0x01:0) |
+			(NEGATIVE ?0x80:0) | (OVERFLOW ?0x40:0) | (DECIMAL_MODE?0x08:0) |
+			(INTERRUPT_DISABLE?0x04:0) | (ZERO ?0x02:0) | (CARRY ?0x01:0) |
 			BREAK_COMMAND_FLAG	// Software instructions always push PS with BREAK_COMMAND set;
 		);
 		return b;
 	}
 	
 	public void PS(byte b) {
-		setNEGATIVE((b & 0x80) != 0); setOVERFLOW((b & 0x40) != 0);
-		DECIMAL_MODE = (b & 0x08) != 0; INTERRUPT_DISABLE = (b & 0x04) != 0; setZERO((b & 0x02) != 0); setCARRY((b & 0x01) != 0);
+		NEGATIVE = (b & 0x80) != 0; OVERFLOW = (b & 0x40) != 0;
+		DECIMAL_MODE = (b & 0x08) != 0; INTERRUPT_DISABLE = (b & 0x04) != 0; ZERO = (b & 0x02) != 0; CARRY = (b & 0x01) != 0;
 		// BREAK_COMMAND actually does not exist as a real flag
 	}
 
@@ -269,7 +269,7 @@ public final class M6502 implements ClockDriven {
 	}
 
 	public void step() {
-		currentInstruction = instructions[toUnsignedByte(bus.readByte(PC++))];	// Reads the instruction to be executed
+		currentInstruction = instructions(toUnsignedByte(bus.readByte(PC++)));	// Reads the instruction to be executed
 		currentInstruction.fetch();
 		currentInstruction.execute();
 	}
@@ -289,10 +289,10 @@ public final class M6502 implements ClockDriven {
 	public String printState() {
 		String str = "";
 		str = str + 
-		"A: " + String.format("%02x", getA()) +
-		", X: " + String.format("%02x", getX()) +
-		", Y: " + String.format("%02x", getY()) +
-		", SP: " + String.format("%02x", getSP()) +
+		"A: " + String.format("%02x", A) +
+		", X: " + String.format("%02x", X) +
+		", Y: " + String.format("%02x", Y) +
+		", SP: " + String.format("%02x", SP) +
 		", PC: " + String.format("%04x", (int)PC) +
 		", Flags: " + String.format("%08d", Integer.parseInt(Integer.toBinaryString(PS() & 0xff))) +
 		", Instr: " + (currentInstruction != null ? currentInstruction.getClass().getSimpleName() : "none" ) +  
@@ -326,8 +326,8 @@ public final class M6502 implements ClockDriven {
 
 	public M6502State saveState() {
 		M6502State state = new M6502State();
-		state.PC = PC; state.A = getA(); state.X = getX(); state.Y = getY(); state.SP = getSP();
-		state.CARRY = isCARRY(); state.ZERO = isZERO(); state.OVERFLOW = isOVERFLOW(); state.NEGATIVE = isNEGATIVE();
+		state.PC = PC; state.A = A; state.X = X; state.Y = Y; state.SP = SP;
+		state.CARRY = CARRY; state.ZERO = ZERO; state.OVERFLOW = OVERFLOW; state.NEGATIVE = NEGATIVE;
 		state.DECIMAL_MODE = DECIMAL_MODE; state.INTERRUPT_DISABLE = INTERRUPT_DISABLE;
 		state.RDY = RDY;
 		state.trace = trace; state.debug = debug;
@@ -338,8 +338,8 @@ public final class M6502 implements ClockDriven {
 	}
 	
 	public void loadState(M6502State state) {
-		PC = state.PC; setA(state.A); setX(state.X); setY(state.Y); setSP(state.SP);
-		setCARRY(state.CARRY); setZERO(state.ZERO); setOVERFLOW(state.OVERFLOW); setNEGATIVE(state.NEGATIVE);
+		PC = state.PC; A = state.A; X = state.X; Y = state.Y; SP = state.SP;
+		CARRY = state.CARRY; ZERO = state.ZERO; OVERFLOW = state.OVERFLOW; NEGATIVE = state.NEGATIVE;
 		DECIMAL_MODE = state.DECIMAL_MODE; INTERRUPT_DISABLE = state.INTERRUPT_DISABLE;
 		RDY = state.RDY;
 		trace = state.trace; debug = state.debug;
@@ -376,266 +376,267 @@ public final class M6502 implements ClockDriven {
 
 	// Instructions map. # = Undocumented Instruction
 	
-	public final Instruction[] instructions = {
-	/*   00 - BRK                  */  new BRK(this),
-	/*   01 - ORA  - (Indirect,X)  */  new ORA(this, IND_X),
-	/* # 02 - uKIL                 */  new uKIL(this),
-	/* # 03 - uSLO - (Indirect,X)  */  new uSLO(this, IND_X),
-	/* # 04 - uNOP - Zero Page     */  new uNOP(this, Z_PAGE),
-	/*   05 - ORA  - Zero Page     */  new ORA(this, Z_PAGE),
-	/*   06 - ASL  - Zero Page     */  new ASL(this, Z_PAGE),
-	/* # 07 - uSLO - Zero Page     */  new uSLO(this, Z_PAGE),
-	/*   08 - PHP                  */  new PHP(this),
-	/*   09 - ORA  - Immediate     */  new ORA(this, IMM),
-	/*   0A - ASL  - Accumulator   */  new ASL(this, ACC),
-	/* # 0B - uANC - Immediate     */  new uANC(this),
-	/* # 0C - uNOP - Absolute      */  new uNOP(this, ABS),
-	/*   0D - ORA  - Absolute      */  new ORA(this, ABS),
-	/*   0E - ASL  - Absolute      */  new ASL(this, ABS),
-	/* # 0F - uSLO - Absolute      */  new uSLO(this, ABS),
-	/*   10 - BPL                  */  new Bxx(this, bNEGATIVE, false),
-	/*   11 - ORA  - (Indirect),Y  */  new ORA(this, IND_Y),
-	/* # 12 - uKIL                 */  new uKIL(this),
-	/* # 13 - uSLO - (Indirect),Y  */  new uSLO(this, IND_Y),
-	/* # 14 - uNOP - Zero Page,X   */  new uNOP(this, Z_PAGE_X),
-	/*   15 - ORA  - Zero Page,X   */  new ORA(this, Z_PAGE_X),
-	/*   16 - ASL  - Zero Page,X   */  new ASL(this, Z_PAGE_X),
-	/* # 17 - uSLO - Zero Page,X   */  new uSLO(this, Z_PAGE_X),
-	/*   18 - CLC                  */  new CLx(this, bCARRY),
-	/*   19 - ORA  - Absolute,Y    */  new ORA(this, ABS_Y),
-	/* # 1A - uNOP                 */  new NOP(this),
-	/* # 1B - uSLO - Absolute,Y    */  new uSLO(this, ABS_Y),
-	/* # 1C - uNOP - Absolute,X    */  new uNOP(this, ABS_X),
-	/*   1D - ORA  - Absolute,X    */  new ORA(this, ABS_X),
-	/*   1E - ASL  - Absolute,X    */  new ASL(this, ABS_X),
-	/* # 1F - uSLO - Absolute,X    */  new uSLO(this, ABS_X),
-	/*   20 - JSR                  */  new JSR(this),
-	/*   21 - AND  - (Indirect,X)  */  new AND(this, IND_X),
-	/* # 22 - uKIL                 */  new uKIL(this),
-	/* # 23 - uRLA - (Indirect,X)  */  new uRLA(this, IND_X),
-	/*   24 - BIT  - Zero Page     */  new BIT(this, Z_PAGE),
-	/*   25 - AND  - Zero Page     */  new AND(this, Z_PAGE),
-	/*   26 - ROL  - Zero Page     */  new ROL(this, Z_PAGE),
-	/* # 27 - uRLA - Zero Page     */  new uRLA(this, Z_PAGE),
-	/*   28 - PLP                  */  new PLP(this),
-	/*   29 - AND  - Immediate     */  new AND(this, IMM),
-	/*   2A - ROL  - Accumulator   */  new ROL(this, ACC),
-	/* # 2B - uANC - Immediate     */  new uANC(this),
-	/*   2C - BIT  - Absolute      */  new BIT(this, ABS),
-	/*   2D - AND  - Absolute      */  new AND(this, ABS),
-	/*   2E - ROL  - Absolute      */  new ROL(this, ABS),
-	/* # 2F - uRLA - Absolute      */  new uRLA(this, ABS),
-	/*   30 - BMI                  */  new Bxx(this, bNEGATIVE, true),
-	/*   31 - AND  - (Indirect),Y  */  new AND(this, IND_Y),
-	/* # 32 - uKIL                 */  new uKIL(this),
-	/* # 33 - uRLA - (Indirect),Y  */  new uRLA(this, IND_Y),
-	/* # 34 - uNOP - Zero Page,X   */  new uNOP(this, Z_PAGE_X),
-	/*   35 - AND  - Zero Page,X   */  new AND(this, Z_PAGE_X),
-	/*   36 - ROL  - Zero Page,X   */  new ROL(this, Z_PAGE_X),
-	/* # 37 - uRLA - Zero Page,X   */  new uRLA(this, Z_PAGE_X),
-	/*   38 - SEC                  */  new SEx(this, bCARRY),
-	/*   39 - AND  - Absolute,Y    */  new AND(this, ABS_Y),
-	/* # 3A - uNOP                 */  new NOP(this),
-	/* # 3B - uRLA - Absolute,Y    */  new uRLA(this, ABS_Y),
-	/* # 3C - uNOP - Absolute,X    */  new uNOP(this, ABS_X),
-	/*   3D - AND  - Absolute,X    */  new AND(this, ABS_X),
-	/*   3E - ROL  - Absolute,X    */  new ROL(this, ABS_X),
-	/* # 3F - uRLA - Absolute,X    */  new uRLA(this, ABS_X),
-	/*   40 - RTI                  */  new RTI(this),
-	/*   41 - EOR  - (Indirect,X)  */  new EOR(this, IND_X),
-	/* # 42 - uKIL                 */  new uKIL(this),
-	/* # 43 - uSRE - (Indirect,X)  */  new uSRE(this, IND_X),
-	/* # 44 - uNOP - Zero Page     */  new uNOP(this, Z_PAGE),
-	/*   45 - EOR  - Zero Page     */  new EOR(this, Z_PAGE),
-	/*   46 - LSR  - Zero Page     */  new LSR(this, Z_PAGE),
-	/* # 47 - uSRE - Zero Page     */  new uSRE(this, Z_PAGE),
-	/*   48 - PHA                  */  new PHA(this),
-	/*   49 - EOR  - Immediate     */  new EOR(this, IMM),
-	/*   4A - LSR  - Accumulator   */  new LSR(this, ACC),
-	/* # 4B - uASR - Immediate     */  new uASR(this),
-	/*   4C - JMP  - Absolute      */  new JMP(this, ABS),
-	/*   4D - EOR  - Absolute      */  new EOR(this, ABS),
-	/*   4E - LSR  - Absolute      */  new LSR(this, ABS),
-	/* # 4F - uSRE - Absolute      */  new uSRE(this, ABS),
-	/*   50 - BVC                  */  new Bxx(this, bOVERFLOW, false),
-	/*   51 - EOR  - (Indirect),Y  */  new EOR(this, IND_Y),
-	/* # 52 - uKIL                 */  new uKIL(this),
-	/* # 53 - uSRE - (Indirect),Y  */  new uSRE(this, IND_Y),
-	/* # 54 - uNOP - Zero Page,X   */  new uNOP(this, Z_PAGE_X),
-	/*   55 - EOR  - Zero Page,X   */  new EOR(this, Z_PAGE_X),
-	/*   56 - LSR  - Zero Page,X   */  new LSR(this, Z_PAGE_X),
-	/* # 57 - uSRE - Zero Page,X   */  new uSRE(this, Z_PAGE_X),
-	/*   58 - CLI                  */  new CLx(this, bINTERRUPT_DISABLE),
-	/*   59 - EOR  - Absolute,Y    */  new EOR(this, ABS_Y),
-	/* # 5A - uNOP                 */  new NOP(this),
-	/* # 5B - uSRE - Absolute,Y    */  new uSRE(this, ABS_Y),
-	/* # 5C - uNOP - Absolute,X    */  new uNOP(this, ABS_X),
-	/*   5D - EOR  - Absolute,X    */  new EOR(this, ABS_X),
-	/*   5E - LSR  - Absolute,X    */  new LSR(this, ABS_X),
-	/* # 5F - uSRE - Absolute,X    */  new uSRE(this, ABS_X),
-	/*   60 - RTS                  */  new RTS(this),
-	/*   61 - ADC  - (Indirect,X)  */  new ADC(this, IND_X),
-	/* # 62 - uKIL                 */  new uKIL(this),
-	/* # 63 - uRRA - (Indirect,X)  */  new uRRA(this, IND_X),
-	/* # 64 - uNOP - Zero Page     */  new uNOP(this, Z_PAGE),
-	/*   65 - ADC  - Zero Page     */  new ADC(this, Z_PAGE),
-	/*   66 - ROR  - Zero Page     */  new ROR(this, Z_PAGE),
-	/* # 67 - uRRA - Zero Page     */  new uRRA(this, Z_PAGE),
-	/*   68 - PLA                  */  new PLA(this),
-	/*   69 - ADC  - Immediate     */  new ADC(this, IMM),
-	/*   6A - ROR  - Accumulator   */  new ROR(this, ACC),
-	/* # 6B - uARR - Immediate     */  new uARR(this),
-	/*   6C - JMP  - Indirect      */  new JMP(this, IND),
-	/*   6D - ADC  - Absolute      */  new ADC(this, ABS),
-	/*   6E - ROR  - Absolute      */  new ROR(this, ABS),
-	/* # 6F - uRRA - Absolute      */  new uRRA(this, ABS),
-	/*   70 - BVS                  */  new Bxx(this, bOVERFLOW, true),
-	/*   71 - ADC  - (Indirect),Y  */  new ADC(this, IND_Y),
-	/* # 72 - uKIL                 */  new uKIL(this),
-	/* # 73 - uRRA - (Indirect),Y  */  new uRRA(this, IND_Y),
-	/* # 74 - uNOP - Zero Page,X   */  new uNOP(this, Z_PAGE_X),
-	/*   75 - ADC  - Zero Page,X   */  new ADC(this, Z_PAGE_X),
-	/*   76 - ROR  - Zero Page,X   */  new ROR(this, Z_PAGE_X),
-	/* # 77 - uRRA - Zero Page,X   */  new uRRA(this, Z_PAGE_X),
-	/*   78 - SEI                  */  new SEx(this, bINTERRUPT_DISABLE),
-	/*   79 - ADC  - Absolute,Y    */  new ADC(this, ABS_Y),
-	/* # 7A - uNOP                 */  new NOP(this),
-	/* # 7B - uRRA - Absolute,Y    */  new uRRA(this, ABS_Y),
-	/* # 7C - uNOP - Absolute,X    */  new uNOP(this, ABS_X),
-	/*   7D - ADC  - Absolute,X    */  new ADC(this, ABS_X),
-	/*   7E - ROR  - Absolute,X    */  new ROR(this, ABS_X),
-	/* # 7F - uRRA - Absolute,X    */  new uRRA(this, ABS_X),
-	/* # 80 - uNOP - Immediate     */  new uNOP(this, IMM),
-	/*   81 - STA  - (Indirect,X)  */  new STx(this, rA, IND_X),
-	/* # 82 - uNOP - Immediate     */  new uNOP(this, IMM),
-	/* # 83 - uSAX - (Indirect,X)  */  new uSAX(this, IND_X),
-	/*   84 - STY  - Zero Page     */  new STx(this, rY, Z_PAGE),
-	/*   85 - STA  - Zero Page     */  new STx(this, rA, Z_PAGE),
-	/*   86 - STX  - Zero Page     */  new STx(this, rX, Z_PAGE),
-	/* # 87 - uSAX - Zero Page     */  new uSAX(this, Z_PAGE),
-	/*   88 - DEY                  */  new DEx(this, rY),
-	/* # 89 - uNOP - Immediate     */  new uNOP(this, IMM),
-	/*   8A - TXA                  */  new Txx(this, rX, rA),
-	/* # 8B - uANE - Immediate     */  new uANE(this),
-	/*   8C - STY  - Absolute      */  new STx(this, rY, ABS),
-	/*   8D - STA  - Absolute      */  new STx(this, rA, ABS),
-	/*   8E - STX  - Absolute      */  new STx(this, rX, ABS),
-	/* # 8F - uSAX - Absolute      */  new uSAX(this, ABS),
-	/*   90 - BCC                  */  new Bxx(this, bCARRY, false),
-	/*   91 - STA  - (Indirect),Y  */  new STx(this, rA, IND_Y),
-	/* # 92 - uKIL                 */  new uKIL(this),		// Only Implied
-	/* # 93 - uSHA - (Indirect),Y  */  new uSHA(this, IND_Y),
-	/*   94 - STY  - Zero Page,X   */  new STx(this, rY, Z_PAGE_X),
-	/*   95 - STA  - Zero Page,X   */  new STx(this, rA, Z_PAGE_X),
-	/*   96 - STX  - Zero Page,Y   */  new STx(this, rX, Z_PAGE_Y),
-	/* # 97 - uSAX - Zero Page,Y   */  new uSAX(this, Z_PAGE_Y),
-	/*   98 - TYA                  */  new Txx(this, rY, rA),
-	/*   99 - STA  - Absolute,Y    */  new STx(this, rA, ABS_Y),
-	/*   9A - TXS                  */  new Txx(this, rX, rSP),
-	/* # 9B - uSHS - Absolute,Y    */  new uSHS(this),
-	/* # 9C - uSHY - Absolute,X    */  new uSHY(this),
-	/*   9D - STA  - Absolute,X    */  new STx(this, rA, ABS_X),
-	/* # 9E - uSHX - Absolute,Y    */  new uSHX(this),
-	/* # 9F - uSHA - Absolute, Y   */  new uSHA(this, ABS_Y),
-	/*   A0 - LDY  - Immediate     */  new LDx(this, rY, IMM),
-	/*   A1 - LDA  - (Indirect,X)  */  new LDx(this, rA, IND_X),
-	/*   A2 - LDX  - Immediate     */  new LDx(this, rX, IMM),
-	/* # A3 - uLAX - (Indirect,X)  */  new uLAX(this, IND_X),
-	/*   A4 - LDY  - Zero Page     */  new LDx(this, rY, Z_PAGE),
-	/*   A5 - LDA  - Zero Page     */  new LDx(this, rA, Z_PAGE),
-	/*   A6 - LDX  - Zero Page     */  new LDx(this, rX, Z_PAGE),
-	/* # A7 - uLAX - Zero Page     */  new uLAX(this, Z_PAGE),
-	/*   A8 - TAY                  */  new Txx(this, rA, rY),
-	/*   A9 - LDA  - Immediate     */  new LDx(this, rA, IMM),
-	/*   AA - TAX                  */  new Txx(this, rA, rX),
-	/* # AB - uLXA - Immediate     */  new uLXA(this),
-	/*   AC - LDY  - Absolute      */  new LDx(this, rY, ABS),
-	/*   AD - LDA  - Absolute      */  new LDx(this, rA, ABS),
-	/*   AE - LDX  - Absolute      */  new LDx(this, rX, ABS),
-	/* # AF - uLAX - Absolute      */  new uLAX(this, ABS),
-	/*   B0 - BCS                  */  new Bxx(this, bCARRY, true),
-	/*   B1 - LDA  - (Indirect),Y  */  new LDx(this, rA, IND_Y),
-	/* # B2 - uKIL                 */  new uKIL(this),
-	/* # B3 - uLAX - (Indirect),Y  */  new uLAX(this, IND_Y),
-	/*   B4 - LDY  - Zero Page,X   */  new LDx(this, rY, Z_PAGE_X),
-	/*   BS - LDA  - Zero Page,X   */  new LDx(this, rA, Z_PAGE_X),
-	/*   B6 - LDX  - Zero Page,Y   */  new LDx(this, rX, Z_PAGE_Y),
-	/* # B7 - uLAX - Zero Page,Y   */  new uLAX(this, Z_PAGE_Y),
-	/*   B8 - CLV                  */  new CLx(this, bOVERFLOW),
-	/*   B9 - LDA  - Absolute,Y    */  new LDx(this, rA, ABS_Y),
-	/*   BA - TSX                  */  new Txx(this, rSP, rX),
-	/* # BB - uLAS - Absolute,Y    */  new uLAS(this),
-	/*   BC - LDY  - Absolute,X    */  new LDx(this, rY, ABS_X),
-	/*   BD - LDA  - Absolute,X    */  new LDx(this, rA, ABS_X),
-	/*   BE - LDX  - Absolute,Y    */  new LDx(this, rX, ABS_Y),
-	/* # BF - uLAX - Absolute,Y    */  new uLAX(this, ABS_Y),
-	/*   C0 - CPY  - Immediate     */  new CPx(this, rY, IMM),
-	/*   C1 - CMP  - (Indirect,X)  */  new CPx(this, rA, IND_X),
-	/* # C2 - uNOP - Immediate     */  new uNOP(this, IMM),
-	/* # C3 - uDCP - (Indirect,X)  */  new uDCP(this, IND_X),
-	/*   C4 - CPY  - Zero Page     */  new CPx(this, rY, Z_PAGE),
-	/*   C5 - CMP  - Zero Page     */  new CPx(this, rA, Z_PAGE),
-	/*   C6 - DEC  - Zero Page     */  new DEC(this, Z_PAGE),
-	/* # C7 - uDCP - Zero Page     */  new uDCP(this, Z_PAGE),
-	/*   C8 - INY                  */  new INx(this, rY),
-	/*   C9 - CMP  - Immediate     */  new CPx(this, rA, IMM),
-	/*   CA - DEX                  */  new DEx(this, rX),
-	/* # CB - uSBX - Immediate     */  new uSBX(this),
-	/*   CC - CPY  - Absolute      */  new CPx(this, rY, ABS),
-	/*   CD - CMP  - Absolute      */  new CPx(this, rA, ABS),
-	/*   CE - DEC  - Absolute      */  new DEC(this, ABS),
-	/* # CF - uDCP - Absolute      */  new uDCP(this, ABS),
-	/*   D0 - BNE                  */  new Bxx(this, bZERO, false),
-	/*   D1 - CMP  - (Indirect),Y  */  new CPx(this, rA, IND_Y),
-	/* # D2 - uKIL                 */  new uKIL(this),
-	/* # D3 - uDCP - (Indirect),Y  */  new uDCP(this, IND_Y),
-	/* # D4 - uNOP - Zero Page,X   */  new uNOP(this, Z_PAGE_X),
-	/*   D5 - CMP  - Zero Page,X   */  new CPx(this, rA, Z_PAGE_X),
-	/*   D6 - DEC  - Zero Page,X   */  new DEC(this, Z_PAGE_X),
-	/* # D7 - uDCP - Zero Page, X  */  new uDCP(this, Z_PAGE_X),
-	/*   D8 - CLD                  */  new CLx(this, bDECIMAL_MODE),
-	/*   D9 - CMP  - Absolute,Y    */  new CPx(this, rA, ABS_Y),
-	/* # DA - uNOP                 */  new NOP(this),
-	/* # DB - uDCP - Absolute,Y    */  new uDCP(this, ABS_Y),
-	/* # DC - uNOP - Absolute,X    */  new uNOP(this, ABS_X),
-	/*   DD - CMP  - Absolute,X    */  new CPx(this, rA, ABS_X),
-	/*   DE - DEC  - Absolute,X    */  new DEC(this, ABS_X),
-	/* # DF - uDCP - Absolute,X    */  new uDCP(this, ABS_X),
-	/*   E0 - CPX  - Immediate     */  new CPx(this, rX, IMM),
-	/*   E1 - SBC  - (Indirect,X)  */  new SBC(this, IND_X),
-	/* # E2 - uNOP - Immediate     */  new uNOP(this, IMM),
-	/* # E3 - uISB - (Indirect,X)  */  new uISB(this, IND_X),
-	/*   E4 - CPX  - Zero Page     */  new CPx(this, rX, Z_PAGE),
-	/*   E5 - SBC  - Zero Page     */  new SBC(this, Z_PAGE),
-	/*   E6 - INC  - Zero Page     */  new INC(this, Z_PAGE),
-	/* # E7 - uISB - Zero Page     */  new uISB(this, Z_PAGE),
-	/*   E8 - INX                  */  new INx(this, rX),
-	/*   E9 - SBC  - Immediate     */  new SBC(this, IMM),
-	/*   EA - NOP                  */  new NOP(this),
-	/* # EB - uSBC - Immediate     */  new SBC(this, IMM),
-	/*   EC - CPX  - Absolute      */  new CPx(this, rX, ABS),
-	/*   ED - SBC  - Absolute      */  new SBC(this, ABS),
-	/*   EE - INC  - Absolute      */  new INC(this, ABS),
-	/* # EF - uISB - Absolute      */  new uISB(this, ABS),
-	/*   F0 - BEQ                  */  new Bxx(this, bZERO, true),
-	/*   F1 - SBC  - (Indirect),Y  */  new SBC(this, IND_Y),
-	/* # F2 - uKIL                 */  new uKIL(this),
-	/* # F3 - uISB - (Indirect),Y  */  new uISB(this, IND_Y),
-	/* # F4 - uNOP - Zero Page,X   */  new uNOP(this, Z_PAGE_X),
-	/*   F5 - SBC  - Zero Page,X   */  new SBC(this, Z_PAGE_X),
-	/*   F6 - INC  - Zero Page,X   */  new INC(this, Z_PAGE_X),
-	/* # F7 - uISB - Zero Page,X   */  new uISB(this, Z_PAGE_X),
-	/*   F8 - SED                  */  new SEx(this, bDECIMAL_MODE),
-	/*   F9 - SBC  - Absolute,Y    */  new SBC(this, ABS_Y),
-	/* # FA - uNOP                 */  new NOP(this),
-	/* # FB - uISB - Absolute,Y    */  new uISB(this, ABS_Y),
-	/* # FC - uNOP - Absolute,X    */  new uNOP(this, ABS_X),
-	/*   FD - SBC  - Absolute,X    */  new SBC(this, ABS_X),
-	/*   FE - INC  - Absolute,X    */  new INC(this, ABS_X),
-	/* # FF - uISB - Absolute,X    */  new uISB(this, ABS_X) 
-	};
-
-    public Instruction getInstruction(int i) { return instructions[i]; }
+	public Instruction instructions(int i) {
+		switch (i) {
+        case 0x00: /* - BRK                  */  return new BRK(this);
+        case 0x01: /* - ORA  - (Indirect,X)  */  return new ORA(this, IND_X);
+        case 0x02: /* - uKIL                 */  return new uKIL(this);
+        case 0x03: /* - uSLO - (Indirect,X)  */  return new uSLO(this, IND_X);
+        case 0x04: /* - uNOP - Zero Page     */  return new uNOP(this, Z_PAGE);
+        case 0x05: /* - ORA  - Zero Page     */  return new ORA(this, Z_PAGE);
+        case 0x06: /* - ASL  - Zero Page     */  return new ASL(this, Z_PAGE);
+        case 0x07: /* - uSLO - Zero Page     */  return new uSLO(this, Z_PAGE);
+        case 0x08: /* - PHP                  */  return new PHP(this);
+        case 0x09: /* - ORA  - Immediate     */  return new ORA(this, IMM);
+        case 0x0A: /* - ASL  - Accumulator   */  return new ASL(this, ACC);
+        case 0x0B: /* - uANC - Immediate     */  return new uANC(this);
+        case 0x0C: /* - uNOP - Absolute      */  return new uNOP(this, ABS);
+        case 0x0D: /* - ORA  - Absolute      */  return new ORA(this, ABS);
+        case 0x0E: /* - ASL  - Absolute      */  return new ASL(this, ABS);
+        case 0x0F: /* - uSLO - Absolute      */  return new uSLO(this, ABS);
+        case 0x10: /* - BPL                  */  return new Bxx(this, bNEGATIVE, false);
+        case 0x11: /* - ORA  - (Indirect),Y  */  return new ORA(this, IND_Y);
+        case 0x12: /* - uKIL                 */  return new uKIL(this);
+        case 0x13: /* - uSLO - (Indirect),Y  */  return new uSLO(this, IND_Y);
+        case 0x14: /* - uNOP - Zero Page,X   */  return new uNOP(this, Z_PAGE_X);
+        case 0x15: /* - ORA  - Zero Page,X   */  return new ORA(this, Z_PAGE_X);
+        case 0x16: /* - ASL  - Zero Page,X   */  return new ASL(this, Z_PAGE_X);
+        case 0x17: /* - uSLO - Zero Page,X   */  return new uSLO(this, Z_PAGE_X);
+        case 0x18: /* - CLC                  */  return new CLx(this, bCARRY);
+        case 0x19: /* - ORA  - Absolute,Y    */  return new ORA(this, ABS_Y);
+        case 0x1A: /* - uNOP                 */  return new NOP(this);
+        case 0x1B: /* - uSLO - Absolute,Y    */  return new uSLO(this, ABS_Y);
+        case 0x1C: /* - uNOP - Absolute,X    */  return new uNOP(this, ABS_X);
+        case 0x1D: /* - ORA  - Absolute,X    */  return new ORA(this, ABS_X);
+        case 0x1E: /* - ASL  - Absolute,X    */  return new ASL(this, ABS_X);
+        case 0x1F: /* - uSLO - Absolute,X    */  return new uSLO(this, ABS_X);
+        case 0x20: /* - JSR                  */  return new JSR(this);
+        case 0x21: /* - AND  - (Indirect,X)  */  return new AND(this, IND_X);
+        case 0x22: /* - uKIL                 */  return new uKIL(this);
+        case 0x23: /* - uRLA - (Indirect,X)  */  return new uRLA(this, IND_X);
+        case 0x24: /* - BIT  - Zero Page     */  return new BIT(this, Z_PAGE);
+        case 0x25: /* - AND  - Zero Page     */  return new AND(this, Z_PAGE);
+        case 0x26: /* - ROL  - Zero Page     */  return new ROL(this, Z_PAGE);
+        case 0x27: /* - uRLA - Zero Page     */  return new uRLA(this, Z_PAGE);
+        case 0x28: /* - PLP                  */  return new PLP(this);
+        case 0x29: /* - AND  - Immediate     */  return new AND(this, IMM);
+        case 0x2A: /* - ROL  - Accumulator   */  return new ROL(this, ACC);
+        case 0x2B: /* - uANC - Immediate     */  return new uANC(this);
+        case 0x2C: /* - BIT  - Absolute      */  return new BIT(this, ABS);
+        case 0x2D: /* - AND  - Absolute      */  return new AND(this, ABS);
+        case 0x2E: /* - ROL  - Absolute      */  return new ROL(this, ABS);
+        case 0x2F: /* - uRLA - Absolute      */  return new uRLA(this, ABS);
+        case 0x30: /* - BMI                  */  return new Bxx(this, bNEGATIVE, true);
+        case 0x31: /* - AND  - (Indirect),Y  */  return new AND(this, IND_Y);
+        case 0x32: /* - uKIL                 */  return new uKIL(this);
+        case 0x33: /* - uRLA - (Indirect),Y  */  return new uRLA(this, IND_Y);
+        case 0x34: /* - uNOP - Zero Page,X   */  return new uNOP(this, Z_PAGE_X);
+        case 0x35: /* - AND  - Zero Page,X   */  return new AND(this, Z_PAGE_X);
+        case 0x36: /* - ROL  - Zero Page,X   */  return new ROL(this, Z_PAGE_X);
+        case 0x37: /* - uRLA - Zero Page,X   */  return new uRLA(this, Z_PAGE_X);
+        case 0x38: /* - SEC                  */  return new SEx(this, bCARRY);
+        case 0x39: /* - AND  - Absolute,Y    */  return new AND(this, ABS_Y);
+        case 0x3A: /* - uNOP                 */  return new NOP(this);
+        case 0x3B: /* - uRLA - Absolute,Y    */  return new uRLA(this, ABS_Y);
+        case 0x3C: /* - uNOP - Absolute,X    */  return new uNOP(this, ABS_X);
+        case 0x3D: /* - AND  - Absolute,X    */  return new AND(this, ABS_X);
+        case 0x3E: /* - ROL  - Absolute,X    */  return new ROL(this, ABS_X);
+        case 0x3F: /* - uRLA - Absolute,X    */  return new uRLA(this, ABS_X);
+        case 0x40: /* - RTI                  */  return new RTI(this);
+        case 0x41: /* - EOR  - (Indirect,X)  */  return new EOR(this, IND_X);
+        case 0x42: /* - uKIL                 */  return new uKIL(this);
+        case 0x43: /* - uSRE - (Indirect,X)  */  return new uSRE(this, IND_X);
+        case 0x44: /* - uNOP - Zero Page     */  return new uNOP(this, Z_PAGE);
+        case 0x45: /* - EOR  - Zero Page     */  return new EOR(this, Z_PAGE);
+        case 0x46: /* - LSR  - Zero Page     */  return new LSR(this, Z_PAGE);
+        case 0x47: /* - uSRE - Zero Page     */  return new uSRE(this, Z_PAGE);
+        case 0x48: /* - PHA                  */  return new PHA(this);
+        case 0x49: /* - EOR  - Immediate     */  return new EOR(this, IMM);
+        case 0x4A: /* - LSR  - Accumulator   */  return new LSR(this, ACC);
+        case 0x4B: /* - uASR - Immediate     */  return new uASR(this);
+        case 0x4C: /* - JMP  - Absolute      */  return new JMP(this, ABS);
+        case 0x4D: /* - EOR  - Absolute      */  return new EOR(this, ABS);
+        case 0x4E: /* - LSR  - Absolute      */  return new LSR(this, ABS);
+        case 0x4F: /* - uSRE - Absolute      */  return new uSRE(this, ABS);
+        case 0x50: /* - BVC                  */  return new Bxx(this, bOVERFLOW, false);
+        case 0x51: /* - EOR  - (Indirect),Y  */  return new EOR(this, IND_Y);
+        case 0x52: /* - uKIL                 */  return new uKIL(this);
+        case 0x53: /* - uSRE - (Indirect),Y  */  return new uSRE(this, IND_Y);
+        case 0x54: /* - uNOP - Zero Page,X   */  return new uNOP(this, Z_PAGE_X);
+        case 0x55: /* - EOR  - Zero Page,X   */  return new EOR(this, Z_PAGE_X);
+        case 0x56: /* - LSR  - Zero Page,X   */  return new LSR(this, Z_PAGE_X);
+        case 0x57: /* - uSRE - Zero Page,X   */  return new uSRE(this, Z_PAGE_X);
+        case 0x58: /* - CLI                  */  return new CLx(this, bINTERRUPT_DISABLE);
+        case 0x59: /* - EOR  - Absolute,Y    */  return new EOR(this, ABS_Y);
+        case 0x5A: /* - uNOP                 */  return new NOP(this);
+        case 0x5B: /* - uSRE - Absolute,Y    */  return new uSRE(this, ABS_Y);
+        case 0x5C: /* - uNOP - Absolute,X    */  return new uNOP(this, ABS_X);
+        case 0x5D: /* - EOR  - Absolute,X    */  return new EOR(this, ABS_X);
+        case 0x5E: /* - LSR  - Absolute,X    */  return new LSR(this, ABS_X);
+        case 0x5F: /* - uSRE - Absolute,X    */  return new uSRE(this, ABS_X);
+        case 0x60: /* - RTS                  */  return new RTS(this);
+        case 0x61: /* - ADC  - (Indirect,X)  */  return new ADC(this, IND_X);
+        case 0x62: /* - uKIL                 */  return new uKIL(this);
+        case 0x63: /* - uRRA - (Indirect,X)  */  return new uRRA(this, IND_X);
+        case 0x64: /* - uNOP - Zero Page     */  return new uNOP(this, Z_PAGE);
+        case 0x65: /* - ADC  - Zero Page     */  return new ADC(this, Z_PAGE);
+        case 0x66: /* - ROR  - Zero Page     */  return new ROR(this, Z_PAGE);
+        case 0x67: /* - uRRA - Zero Page     */  return new uRRA(this, Z_PAGE);
+        case 0x68: /* - PLA                  */  return new PLA(this);
+        case 0x69: /* - ADC  - Immediate     */  return new ADC(this, IMM);
+        case 0x6A: /* - ROR  - Accumulator   */  return new ROR(this, ACC);
+        case 0x6B: /* - uARR - Immediate     */  return new uARR(this);
+        case 0x6C: /* - JMP  - Indirect      */  return new JMP(this, IND);
+        case 0x6D: /* - ADC  - Absolute      */  return new ADC(this, ABS);
+        case 0x6E: /* - ROR  - Absolute      */  return new ROR(this, ABS);
+        case 0x6F: /* - uRRA - Absolute      */  return new uRRA(this, ABS);
+        case 0x70: /* - BVS                  */  return new Bxx(this, bOVERFLOW, true);
+        case 0x71: /* - ADC  - (Indirect),Y  */  return new ADC(this, IND_Y);
+        case 0x72: /* - uKIL                 */  return new uKIL(this);
+        case 0x73: /* - uRRA - (Indirect),Y  */  return new uRRA(this, IND_Y);
+        case 0x74: /* - uNOP - Zero Page,X   */  return new uNOP(this, Z_PAGE_X);
+        case 0x75: /* - ADC  - Zero Page,X   */  return new ADC(this, Z_PAGE_X);
+        case 0x76: /* - ROR  - Zero Page,X   */  return new ROR(this, Z_PAGE_X);
+        case 0x77: /* - uRRA - Zero Page,X   */  return new uRRA(this, Z_PAGE_X);
+        case 0x78: /* - SEI                  */  return new SEx(this, bINTERRUPT_DISABLE);
+        case 0x79: /* - ADC  - Absolute,Y    */  return new ADC(this, ABS_Y);
+        case 0x7A: /* - uNOP                 */  return new NOP(this);
+        case 0x7B: /* - uRRA - Absolute,Y    */  return new uRRA(this, ABS_Y);
+        case 0x7C: /* - uNOP - Absolute,X    */  return new uNOP(this, ABS_X);
+        case 0x7D: /* - ADC  - Absolute,X    */  return new ADC(this, ABS_X);
+        case 0x7E: /* - ROR  - Absolute,X    */  return new ROR(this, ABS_X);
+        case 0x7F: /* - uRRA - Absolute,X    */  return new uRRA(this, ABS_X);
+        case 0x80: /* - uNOP - Immediate     */  return new uNOP(this, IMM);
+        case 0x81: /* - STA  - (Indirect,X)  */  return new STx(this, rA, IND_X);
+        case 0x82: /* - uNOP - Immediate     */  return new uNOP(this, IMM);
+        case 0x83: /* - uSAX - (Indirect,X)  */  return new uSAX(this, IND_X);
+        case 0x84: /* - STY  - Zero Page     */  return new STx(this, rY, Z_PAGE);
+        case 0x85: /* - STA  - Zero Page     */  return new STx(this, rA, Z_PAGE);
+        case 0x86: /* - STX  - Zero Page     */  return new STx(this, rX, Z_PAGE);
+        case 0x87: /* - uSAX - Zero Page     */  return new uSAX(this, Z_PAGE);
+        case 0x88: /* - DEY                  */  return new DEx(this, rY);
+        case 0x89: /* - uNOP - Immediate     */  return new uNOP(this, IMM);
+        case 0x8A: /* - TXA                  */  return new Txx(this, rX, rA);
+        case 0x8B: /* - uANE - Immediate     */  return new uANE(this);
+        case 0x8C: /* - STY  - Absolute      */  return new STx(this, rY, ABS);
+        case 0x8D: /* - STA  - Absolute      */  return new STx(this, rA, ABS);
+        case 0x8E: /* - STX  - Absolute      */  return new STx(this, rX, ABS);
+        case 0x8F: /* - uSAX - Absolute      */  return new uSAX(this, ABS);
+        case 0x90: /* - BCC                  */  return new Bxx(this, bCARRY, false);
+        case 0x91: /* - STA  - (Indirect),Y  */  return new STx(this, rA, IND_Y);
+        case 0x92: /* - uKIL                 */  return new uKIL(this);        // Only Implied
+        case 0x93: /* - uSHA - (Indirect),Y  */  return new uSHA(this, IND_Y);
+        case 0x94: /* - STY  - Zero Page,X   */  return new STx(this, rY, Z_PAGE_X);
+        case 0x95: /* - STA  - Zero Page,X   */  return new STx(this, rA, Z_PAGE_X);
+        case 0x96: /* - STX  - Zero Page,Y   */  return new STx(this, rX, Z_PAGE_Y);
+        case 0x97: /* - uSAX - Zero Page,Y   */  return new uSAX(this, Z_PAGE_Y);
+        case 0x98: /* - TYA                  */  return new Txx(this, rY, rA);
+        case 0x99: /* - STA  - Absolute,Y    */  return new STx(this, rA, ABS_Y);
+        case 0x9A: /* - TXS                  */  return new Txx(this, rX, rSP);
+        case 0x9B: /* - uSHS - Absolute,Y    */  return new uSHS(this);
+        case 0x9C: /* - uSHY - Absolute,X    */  return new uSHY(this);
+        case 0x9D: /* - STA  - Absolute,X    */  return new STx(this, rA, ABS_X);
+        case 0x9E: /* - uSHX - Absolute,Y    */  return new uSHX(this);
+        case 0x9F: /* - uSHA - Absolute, Y   */  return new uSHA(this, ABS_Y);
+        case 0xA0: /* - LDY  - Immediate     */  return new LDx(this, rY, IMM);
+        case 0xA1: /* - LDA  - (Indirect,X)  */  return new LDx(this, rA, IND_X);
+        case 0xA2: /* - LDX  - Immediate     */  return new LDx(this, rX, IMM);
+        case 0xA3: /* - uLAX - (Indirect,X)  */  return new uLAX(this, IND_X);
+        case 0xA4: /* - LDY  - Zero Page     */  return new LDx(this, rY, Z_PAGE);
+        case 0xA5: /* - LDA  - Zero Page     */  return new LDx(this, rA, Z_PAGE);
+        case 0xA6: /* - LDX  - Zero Page     */  return new LDx(this, rX, Z_PAGE);
+        case 0xA7: /* - uLAX - Zero Page     */  return new uLAX(this, Z_PAGE);
+        case 0xA8: /* - TAY                  */  return new Txx(this, rA, rY);
+        case 0xA9: /* - LDA  - Immediate     */  return new LDx(this, rA, IMM);
+        case 0xAA: /* - TAX                  */  return new Txx(this, rA, rX);
+        case 0xAB: /* - uLXA - Immediate     */  return new uLXA(this);
+        case 0xAC: /* - LDY  - Absolute      */  return new LDx(this, rY, ABS);
+        case 0xAD: /* - LDA  - Absolute      */  return new LDx(this, rA, ABS);
+        case 0xAE: /* - LDX  - Absolute      */  return new LDx(this, rX, ABS);
+        case 0xAF: /* - uLAX - Absolute      */  return new uLAX(this, ABS);
+        case 0xB0: /* - BCS                  */  return new Bxx(this, bCARRY, true);
+        case 0xB1: /* - LDA  - (Indirect),Y  */  return new LDx(this, rA, IND_Y);
+        case 0xB2: /* - uKIL                 */  return new uKIL(this);
+        case 0xB3: /* - uLAX - (Indirect),Y  */  return new uLAX(this, IND_Y);
+        case 0xB4: /* - LDY  - Zero Page,X   */  return new LDx(this, rY, Z_PAGE_X);
+        case 0xB5: /* - LDA  - Zero Page,X   */  return new LDx(this, rA, Z_PAGE_X);
+        case 0xB6: /* - LDX  - Zero Page,Y   */  return new LDx(this, rX, Z_PAGE_Y);
+        case 0xB7: /* - uLAX - Zero Page,Y   */  return new uLAX(this, Z_PAGE_Y);
+        case 0xB8: /* - CLV                  */  return new CLx(this, bOVERFLOW);
+        case 0xB9: /* - LDA  - Absolute,Y    */  return new LDx(this, rA, ABS_Y);
+        case 0xBA: /* - TSX                  */  return new Txx(this, rSP, rX);
+        case 0xBB: /* - uLAS - Absolute,Y    */  return new uLAS(this);
+        case 0xBC: /* - LDY  - Absolute,X    */  return new LDx(this, rY, ABS_X);
+        case 0xBD: /* - LDA  - Absolute,X    */  return new LDx(this, rA, ABS_X);
+        case 0xBE: /* - LDX  - Absolute,Y    */  return new LDx(this, rX, ABS_Y);
+        case 0xBF: /* - uLAX - Absolute,Y    */  return new uLAX(this, ABS_Y);
+        case 0xC0: /* - CPY  - Immediate     */  return new CPx(this, rY, IMM);
+        case 0xC1: /* - CMP  - (Indirect,X)  */  return new CPx(this, rA, IND_X);
+        case 0xC2: /* - uNOP - Immediate     */  return new uNOP(this, IMM);
+        case 0xC3: /* - uDCP - (Indirect,X)  */  return new uDCP(this, IND_X);
+        case 0xC4: /* - CPY  - Zero Page     */  return new CPx(this, rY, Z_PAGE);
+        case 0xC5: /* - CMP  - Zero Page     */  return new CPx(this, rA, Z_PAGE);
+        case 0xC6: /* - DEC  - Zero Page     */  return new DEC(this, Z_PAGE);
+        case 0xC7: /* - uDCP - Zero Page     */  return new uDCP(this, Z_PAGE);
+        case 0xC8: /* - INY                  */  return new INx(this, rY);
+        case 0xC9: /* - CMP  - Immediate     */  return new CPx(this, rA, IMM);
+        case 0xCA: /* - DEX                  */  return new DEx(this, rX);
+        case 0xCB: /* - uSBX - Immediate     */  return new uSBX(this);
+        case 0xCC: /* - CPY  - Absolute      */  return new CPx(this, rY, ABS);
+        case 0xCD: /* - CMP  - Absolute      */  return new CPx(this, rA, ABS);
+        case 0xCE: /* - DEC  - Absolute      */  return new DEC(this, ABS);
+        case 0xCF: /* - uDCP - Absolute      */  return new uDCP(this, ABS);
+        case 0xD0: /* - BNE                  */  return new Bxx(this, bZERO, false);
+        case 0xD1: /* - CMP  - (Indirect),Y  */  return new CPx(this, rA, IND_Y);
+        case 0xD2: /* - uKIL                 */  return new uKIL(this);
+        case 0xD3: /* - uDCP - (Indirect),Y  */  return new uDCP(this, IND_Y);
+        case 0xD4: /* - uNOP - Zero Page,X   */  return new uNOP(this, Z_PAGE_X);
+        case 0xD5: /* - CMP  - Zero Page,X   */  return new CPx(this, rA, Z_PAGE_X);
+        case 0xD6: /* - DEC  - Zero Page,X   */  return new DEC(this, Z_PAGE_X);
+        case 0xD7: /* - uDCP - Zero Page, X  */  return new uDCP(this, Z_PAGE_X);
+        case 0xD8: /* - CLD                  */  return new CLx(this, bDECIMAL_MODE);
+        case 0xD9: /* - CMP  - Absolute,Y    */  return new CPx(this, rA, ABS_Y);
+        case 0xDA: /* - uNOP                 */  return new NOP(this);
+        case 0xDB: /* - uDCP - Absolute,Y    */  return new uDCP(this, ABS_Y);
+        case 0xDC: /* - uNOP - Absolute,X    */  return new uNOP(this, ABS_X);
+        case 0xDD: /* - CMP  - Absolute,X    */  return new CPx(this, rA, ABS_X);
+        case 0xDE: /* - DEC  - Absolute,X    */  return new DEC(this, ABS_X);
+        case 0xDF: /* - uDCP - Absolute,X    */  return new uDCP(this, ABS_X);
+        case 0xE0: /* - CPX  - Immediate     */  return new CPx(this, rX, IMM);
+        case 0xE1: /* - SBC  - (Indirect,X)  */  return new SBC(this, IND_X);
+        case 0xE2: /* - uNOP - Immediate     */  return new uNOP(this, IMM);
+        case 0xE3: /* - uISB - (Indirect,X)  */  return new uISB(this, IND_X);
+        case 0xE4: /* - CPX  - Zero Page     */  return new CPx(this, rX, Z_PAGE);
+        case 0xE5: /* - SBC  - Zero Page     */  return new SBC(this, Z_PAGE);
+        case 0xE6: /* - INC  - Zero Page     */  return new INC(this, Z_PAGE);
+        case 0xE7: /* - uISB - Zero Page     */  return new uISB(this, Z_PAGE);
+        case 0xE8: /* - INX                  */  return new INx(this, rX);
+        case 0xE9: /* - SBC  - Immediate     */  return new SBC(this, IMM);
+        case 0xEA: /* - NOP                  */  return new NOP(this);
+        case 0xEB: /* - uSBC - Immediate     */  return new SBC(this, IMM);
+        case 0xEC: /* - CPX  - Absolute      */  return new CPx(this, rX, ABS);
+        case 0xED: /* - SBC  - Absolute      */  return new SBC(this, ABS);
+        case 0xEE: /* - INC  - Absolute      */  return new INC(this, ABS);
+        case 0xEF: /* - uISB - Absolute      */  return new uISB(this, ABS);
+        case 0xF0: /* - BEQ                  */  return new Bxx(this, bZERO, true);
+        case 0xF1: /* - SBC  - (Indirect),Y  */  return new SBC(this, IND_Y);
+        case 0xF2: /* - uKIL                 */  return new uKIL(this);
+        case 0xF3: /* - uISB - (Indirect),Y  */  return new uISB(this, IND_Y);
+        case 0xF4: /* - uNOP - Zero Page,X   */  return new uNOP(this, Z_PAGE_X);
+        case 0xF5: /* - SBC  - Zero Page,X   */  return new SBC(this, Z_PAGE_X);
+        case 0xF6: /* - INC  - Zero Page,X   */  return new INC(this, Z_PAGE_X);
+        case 0xF7: /* - uISB - Zero Page,X   */  return new uISB(this, Z_PAGE_X);
+        case 0xF8: /* - SED                  */  return new SEx(this, bDECIMAL_MODE);
+        case 0xF9: /* - SBC  - Absolute,Y    */  return new SBC(this, ABS_Y);
+        case 0xFA: /* - uNOP                 */  return new NOP(this);
+        case 0xFB: /* - uISB - Absolute,Y    */  return new uISB(this, ABS_Y);
+        case 0xFC: /* - uNOP - Absolute,X    */  return new uNOP(this, ABS_X);
+        case 0xFD: /* - SBC  - Absolute,X    */  return new SBC(this, ABS_X);
+        case 0xFE: /* - INC  - Absolute,X    */  return new INC(this, ABS_X);
+        case 0xFF: /* - uISB - Absolute,X    */  return new uISB(this, ABS_X);
+		}
+        return null;
+	}
 
 	// Constants
 	public static final byte STACK_INITIAL_SP = (byte)0xff;
@@ -658,8 +659,6 @@ public final class M6502 implements ClockDriven {
 
 	private boolean RA, RX, RY, rC, rZ, rV, rN, RSP;
 	private boolean wA, wX, wY, wC, wZ, wV, wN, wSP;
-
-	public int ldaAddress;
 
 	public void resetAccessed() {
 		RA = RX = RY = rC = rZ = rV = rN = wA = wX = wY = wC = wZ = wV = wN = RSP = wSP = false;
@@ -791,5 +790,3 @@ public final class M6502 implements ClockDriven {
 	}
 
 }
-
-

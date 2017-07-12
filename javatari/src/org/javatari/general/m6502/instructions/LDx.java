@@ -32,7 +32,7 @@ public final class LDx extends Instruction {
 	@Override
 	public void execute() {
 		final byte val = cpu.bus.readByte(ea);
-		if (reg == Register.rA) 		{ cpu.ldaAddress = ea; cpu.setA(val); }
+		if (reg == Register.rA) 		cpu.setA(val);
 		else if (reg == Register.rX) 	cpu.setX(val);
 		else if (reg == Register.rY) 	cpu.setY(val);
 		else throw new IllegalStateException("LDx Invalid Register: " + reg);

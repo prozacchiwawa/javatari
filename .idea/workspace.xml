@@ -21,85 +21,25 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="M6502.java" pinned="false" current-in-tab="false">
+      <file leaf-file-name="M6502.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/general/m6502/M6502.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="34">
-              <caret line="247" column="30" lean-forward="true" selection-start-line="247" selection-start-column="30" selection-end-line="247" selection-end-column="30" />
+            <state relative-caret-position="442">
+              <caret line="363" column="37" lean-forward="true" selection-start-line="363" selection-start-column="37" selection-end-line="363" selection-end-column="37" />
               <folding>
                 <element signature="imports" expanded="true" />
-                <element signature="e#10803#10804#0" expanded="true" />
-                <element signature="e#10835#10836#0" expanded="true" />
+                <element signature="e#10753#10754#0" expanded="true" />
+                <element signature="e#10785#10786#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="ITest.fr" pinned="false" current-in-tab="true">
+      <file leaf-file-name="ITest.fr" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ITest.fr">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="255">
-              <caret line="15" column="56" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="BUS.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/atari/board/BUS.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="210">
-              <caret line="104" column="0" lean-forward="false" selection-start-line="104" selection-start-column="0" selection-end-line="104" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="TIA.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/atari/tia/TIA.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="51">
-              <caret line="886" column="0" lean-forward="false" selection-start-line="886" selection-start-column="0" selection-end-line="886" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="PIA.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/atari/pia/PIA.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="242">
-              <caret line="26" column="0" lean-forward="false" selection-start-line="26" selection-start-column="0" selection-end-line="26" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="RAM.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/atari/pia/RAM.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="251">
-              <caret line="20" column="0" lean-forward="false" selection-start-line="20" selection-start-column="0" selection-end-line="20" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="RAM64k.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/general/board/RAM64k.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="204">
-              <caret line="16" column="0" lean-forward="false" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="BUS16Bits.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/general/board/BUS16Bits.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="187">
-              <caret line="11" column="0" lean-forward="false" selection-start-line="11" selection-start-column="0" selection-end-line="11" selection-end-column="0" />
+            <state relative-caret-position="485">
+              <caret line="59" column="0" lean-forward="false" selection-start-line="59" selection-start-column="0" selection-end-line="59" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -108,8 +48,8 @@
       <file leaf-file-name="Trick2600.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/general/board/Trick2600.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="187">
-              <caret line="38" column="35" lean-forward="true" selection-start-line="38" selection-start-column="35" selection-end-line="38" selection-end-column="35" />
+            <state relative-caret-position="204">
+              <caret line="63" column="0" lean-forward="false" selection-start-line="63" selection-start-column="0" selection-end-line="63" selection-end-column="0" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#399#416#0" expanded="true" />
@@ -124,8 +64,8 @@
       <file leaf-file-name="LDx.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/general/m6502/instructions/LDx.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="153">
-              <caret line="24" column="4" lean-forward="true" selection-start-line="24" selection-start-column="4" selection-end-line="24" selection-end-column="4" />
+            <state relative-caret-position="408">
+              <caret line="34" column="0" lean-forward="false" selection-start-line="34" selection-start-column="0" selection-end-line="34" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -151,9 +91,15 @@
       <find>instructions</find>
       <find>step</find>
       <find>instructions[</find>
-      <find>step()</find>
       <find>clockpulse</find>
       <find>fetch</find>
+      <find>fetchimmediate</find>
+      <find>step()</find>
+      <find>readByte</find>
+      <find>savestate</find>
+      <find>RSP =</find>
+      <find>get</find>
+      <find>PS(</find>
     </findStrings>
   </component>
   <component name="GradleLocalSettings">
@@ -166,17 +112,17 @@
       <list>
         <option value="$PROJECT_DIR$/javatari/src/org/javatari/general/m6502/Instruction.java" />
         <option value="$PROJECT_DIR$/javatari/src/org/javatari/atari/console/savestate/ConsoleState.java" />
-        <option value="$PROJECT_DIR$/javatari/src/org/javatari/general/m6502/instructions/LDx.java" />
         <option value="$PROJECT_DIR$/javatari/src/org/javatari/general/m6502/instructions/uANC.java" />
-        <option value="$PROJECT_DIR$/javatari/src/org/javatari/general/board/Trick2600.java" />
         <option value="$PROJECT_DIR$/javatari/src/org/javatari/general/board/BUS16Bits.java" />
         <option value="$PROJECT_DIR$/javatari/src/org/javatari/general/board/RAM64k.java" />
         <option value="$PROJECT_DIR$/javatari/src/org/javatari/atari/pia/RAM.java" />
         <option value="$PROJECT_DIR$/javatari/src/org/javatari/atari/pia/PIA.java" />
         <option value="$PROJECT_DIR$/javatari/src/org/javatari/atari/tia/TIA.java" />
         <option value="$PROJECT_DIR$/javatari/src/org/javatari/atari/board/BUS.java" />
-        <option value="$PROJECT_DIR$/javatari/src/org/javatari/general/m6502/M6502.java" />
         <option value="$PROJECT_DIR$/ITest.fr" />
+        <option value="$PROJECT_DIR$/javatari/src/org/javatari/general/m6502/instructions/LDx.java" />
+        <option value="$PROJECT_DIR$/javatari/src/org/javatari/general/board/Trick2600.java" />
+        <option value="$PROJECT_DIR$/javatari/src/org/javatari/general/m6502/M6502.java" />
       </list>
     </option>
   </component>
@@ -1002,28 +948,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/general/board/Trick2600.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="187">
-          <caret line="38" column="35" lean-forward="true" selection-start-line="38" selection-start-column="35" selection-end-line="38" selection-end-column="35" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#399#416#0" expanded="true" />
-            <element signature="e#465#482#0" expanded="true" />
-            <element signature="e#906#907#0" expanded="true" />
-            <element signature="e#948#949#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/general/board/BUS16Bits.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="187">
-          <caret line="11" column="0" lean-forward="false" selection-start-line="11" selection-start-column="0" selection-end-line="11" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/general/board/RAM64k.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="204">
@@ -1064,31 +988,53 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/general/m6502/instructions/LDx.java">
+    <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/general/board/BUS16Bits.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="153">
-          <caret line="24" column="4" lean-forward="true" selection-start-line="24" selection-start-column="4" selection-end-line="24" selection-end-column="4" />
+        <state relative-caret-position="187">
+          <caret line="11" column="0" lean-forward="false" selection-start-line="11" selection-start-column="0" selection-end-line="11" selection-end-column="0" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/general/m6502/M6502.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="34">
-          <caret line="247" column="30" lean-forward="true" selection-start-line="247" selection-start-column="30" selection-end-line="247" selection-end-column="30" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#10803#10804#0" expanded="true" />
-            <element signature="e#10835#10836#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ITest.fr">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="15" column="56" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
+        <state relative-caret-position="485">
+          <caret line="59" column="0" lean-forward="false" selection-start-line="59" selection-start-column="0" selection-end-line="59" selection-end-column="0" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/general/m6502/instructions/LDx.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="408">
+          <caret line="34" column="0" lean-forward="false" selection-start-line="34" selection-start-column="0" selection-end-line="34" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/general/board/Trick2600.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="63" column="0" lean-forward="false" selection-start-line="63" selection-start-column="0" selection-end-line="63" selection-end-column="0" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#399#416#0" expanded="true" />
+            <element signature="e#465#482#0" expanded="true" />
+            <element signature="e#906#907#0" expanded="true" />
+            <element signature="e#948#949#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/javatari/src/org/javatari/general/m6502/M6502.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="442">
+          <caret line="363" column="37" lean-forward="true" selection-start-line="363" selection-start-column="37" selection-end-line="363" selection-end-column="37" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#10753#10754#0" expanded="true" />
+            <element signature="e#10785#10786#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

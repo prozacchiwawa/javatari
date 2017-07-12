@@ -18,19 +18,55 @@ data M6502 = native org.javatari.general.m6502.M6502 where
      pure native new :: () -> M6502
 
 data Trick2600 = native org.javatari.general.board.Trick2600 where
-     pure native getReads :: Trick2600 -> JArray Boolean
-     pure native getWrites :: Trick2600 -> JArray Boolean
+     pure native getReads :: Trick2600 -> JArray Int
+     pure native getWrites :: Trick2600 -> JArray Int
      pure native new :: String -> Trick2600
+
+formatReadsInner :: Int -> Int -> JArray Int -> String
+formatReadsInner n l a =
+    if n == l - 1 then
+        show (elemAt a n)
+    else
+        (show (elemAt a n)) ++ ", " ++ (formatReadsInner (n + 1) l a)
                         
+formatReads :: JArray Int -> String
+formatReads a =
+    let l = arrayLength a in
+    if l == 0 then
+        "[]"
+    else
+        "[" ++ (formatReadsInner 0 l a) ++ "]"
+
+formatRegsInner :: [String] -> String
+formatRegsInner a =
+   case a of
+     hd : [] -> hd
+     hd : tl ->
+           let rest = formatRegsInner tl in
+           if rest /= "" then
+               if hd /= "" then
+                   hd ++ ", " ++ rest
+               else
+                   rest
+           else
+               hd
+
+formatRegs a =
+    "[" ++ (formatRegsInner (listFromArray a)) ++ "]"
+
 formatInstruction :: M6502 -> String
 formatInstruction cpu =
     let i = M6502.getCurrentInstruction cpu in
-    (M6502.printState cpu) ++ " " ++ (Instruction.toString i)
+    let reads = Trick2600.getReads (M6502.getCurrentBus cpu) in
+    let writes = Trick2600.getWrites (M6502.getCurrentBus cpu) in
+    let isrc = M6502.getInstructionSources cpu in
+    (M6502.printState cpu) ++ " " ++ (Instruction.toString i) ++ " " ++ (formatReads reads) ++ " " ++ (formatReads writes) ++ " " ++ (formatRegs isrc)
 
 doInstructions n cpu =
     if n > 0 then
         do
           stdout.print $ (formatInstruction cpu) ++ "\n"
+          stdout.flush
           doInstructions (n - 1) (M6502.next cpu)
     else
         do
@@ -40,4 +76,4 @@ main _ =
     let trick = Trick2600.new "snoop/Dragster.bin" in
     let cpu = M6502.withBus (M6502.new ()) trick in
     do
-      doInstructions 10 (M6502.next cpu)
+      doInstructions 5000 (M6502.next cpu)
