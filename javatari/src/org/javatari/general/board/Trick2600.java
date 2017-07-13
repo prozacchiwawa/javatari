@@ -67,8 +67,6 @@ public class Trick2600 implements BUS16Bits {
             return arr[address & 0xff];
         } else if (address == 0x284) {
             return 0; // Hack: $F046
-        } else if (address == 0x282) {
-            return 8; // Hack: $F2AA
         } else if (address >= 0x280 && address < 0x2a0) {
             r.put(address, true);
             return arr[address - 0x180];

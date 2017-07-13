@@ -1,0 +1,1 @@
+java -jar ./out/artifacts/javatari_jar/javatari.jar file://`pwd`/snoop/Dragster.bin

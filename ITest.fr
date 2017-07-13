@@ -15,12 +15,14 @@ data M6502 = native org.javatari.general.m6502.M6502 where
      pure native getCurrentBus :: M6502 -> Trick2600
      pure native getCurrentInstruction :: M6502 -> Instruction
      pure native printState :: M6502 -> String
+     pure native setInput :: M6502 -> Int -> M6502
+     pure native getPC :: M6502 -> Int
      pure native new :: () -> M6502
 
 data Trick2600 = native org.javatari.general.board.Trick2600 where
      pure native getReads :: Trick2600 -> JArray Int
      pure native getWrites :: Trick2600 -> JArray Int
-     pure native readByte :: Trick2600 -> Int -> Int
+     pure native readByte :: Trick2600 -> Int -> Byte
      pure native new :: String -> Trick2600
 
 formatReadsInner :: Int -> Int -> JArray Int -> String
@@ -63,18 +65,121 @@ formatInstruction cpu =
     in
     (M6502.printState cpu) ++ " " ++ (Instruction.toString i) ++ " " ++ (formatReads reads) ++ " " ++ (formatReads writes) ++ " " ++ (formatRegs isrc)
 
-doInstructions n cpu =
-    if n > 0 then
+doPreamble cpu =
+    let bus = M6502.getCurrentBus cpu in
+    let reads = listFromArray (Trick2600.getReads bus) in
+    if reads == [640] then -- We read the joystick port
+        cpu
+    else
+        doPreamble (M6502.next cpu)
+
+doFrame cpu =
+    let bus = M6502.getCurrentBus cpu in
+    let reads = listFromArray (Trick2600.getReads bus) in
+    if reads == [640] then -- Read js port
         do
-          stdout.print $ (formatInstruction cpu) ++ "\n"
-          stdout.flush
-          doInstructions (n - 1) (M6502.next cpu)
+          pure (False, cpu)
     else
         do
-          pure ()
-                      
+          --stdout.print $ (M6502.printState cpu) ++ "\n"
+          doFrame (M6502.next cpu)
+
+doOneFrame v cpu =
+    let playerdata endbus n =
+            [
+             Trick2600.readByte endbus (0x90 + n),
+             Trick2600.readByte endbus (0x92 + n),
+             Trick2600.readByte endbus (0x94 + n),
+             Trick2600.readByte endbus (0x96 + n),
+             Trick2600.readByte endbus (0x98 + n),
+             Trick2600.readByte endbus (0x9a + n),
+             Trick2600.readByte endbus (0x9c + n),
+             Trick2600.readByte endbus (0x9e + n),
+             Trick2600.readByte endbus (0xa0 + n),
+             Trick2600.readByte endbus (0xa2 + n),
+             Trick2600.readByte endbus (0xa4 + n),
+             Trick2600.readByte endbus (0xa6 + n),
+             Trick2600.readByte endbus (0xa8 + n),
+             Trick2600.readByte endbus (0xad + n),
+             Trick2600.readByte endbus (0xb1 + n),
+             Trick2600.readByte endbus (0xb3 + n),
+             Trick2600.readByte endbus (0xb5 + n),
+             Trick2600.readByte endbus (0xb7 + n),
+             Trick2600.readByte endbus (0xaa + n),
+             Trick2600.readByte endbus (0xba + n),
+             Trick2600.readByte endbus (0xbc + n),
+             Trick2600.readByte endbus (0xbe + n),
+             Trick2600.readByte endbus (0xc0 + n),
+             Trick2600.readByte endbus (0xc2 + n),
+             Trick2600.readByte endbus (0xc4 + n),
+             Trick2600.readByte endbus (0xc6 + n),
+             Trick2600.readByte endbus (0xc8 + n),
+             Trick2600.readByte endbus (0xca + n),
+             Trick2600.readByte endbus (0xcc + n),
+             Trick2600.readByte endbus (0xce + n),
+             Trick2600.readByte endbus (0xd0 + n),
+             Trick2600.readByte endbus (0xd2 + n),
+             Trick2600.readByte endbus (0xd4 + n)
+            ]
+    in
+    let basedata endbus =
+            [
+             Trick2600.readByte endbus 0x80,
+             Trick2600.readByte endbus 0x81,
+             Trick2600.readByte endbus 0x82,
+             Trick2600.readByte endbus 0x83,
+             Trick2600.readByte endbus 0x84,
+             Trick2600.readByte endbus 0x85,
+             Trick2600.readByte endbus 0x86,
+             Trick2600.readByte endbus 0x87,
+             Trick2600.readByte endbus 0x88,
+             Trick2600.readByte endbus 0x89,
+             Trick2600.readByte endbus 0x8a,
+             Trick2600.readByte endbus 0x8b,
+             Trick2600.readByte endbus 0x8c,
+             Trick2600.readByte endbus 0x8d,
+             Trick2600.readByte endbus 0x8e,
+             Trick2600.readByte endbus 0x8f
+            ]
+    in
+    do
+      (reset,endcpu) <- doFrame (M6502.setInput (M6502.next cpu) v)
+      endbus <- pure $ M6502.getCurrentBus endcpu
+      stdout.print $ "Input " ++ (Int.toHexString v) ++ "\n"
+      stdout.print $ (M6502.printState endcpu) ++ "\n"
+      stdout.print $ (show (basedata endbus)) ++ "\n"
+      stdout.print $ (show (playerdata endbus 0)) ++ "\n"
+      stdout.print $ (show (playerdata endbus 1)) ++ "\n"
+      pure (reset,endcpu)
+      
+doFrames inputs cpu =
+    case inputs of
+      hd : tl ->
+          do
+            (reset,fcpu) <- doOneFrame hd cpu
+            if reset then
+                pure fcpu
+            else
+                doFrames tl fcpu
+      [] ->
+          do
+            pure cpu
+
+quiet = 0xffffff
+jsLeft = 0xbfffff
+jsRight = 0x7fffff
+button = 0xffff7f
+buttonLeft = 0xbfff7f
+reset = 0xfffeff
+
+times n v = if n == 0 then [] else (v : (times (n-1) v))
+            
+inputs = 
+    (times 1 quiet) ++ (times 1 jsRight) ++ (times 1000 quiet) ++ (times 1 buttonLeft) ++ (times 20 button)
+        
 main _ =
     let trick = Trick2600.new "snoop/Dragster.bin" in
-    let cpu = M6502.withBus (M6502.new ()) trick in
+    let cpu = M6502.setInput (M6502.withBus (M6502.new ()) trick) quiet in
     do
-      doInstructions 100000 (M6502.next cpu)
+      ncpu <- doFrames inputs (doPreamble (M6502.next cpu))
+      stdout.print $ "end-cpu " ++ (M6502.printState ncpu) ++ "\n"

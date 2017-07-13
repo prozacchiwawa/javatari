@@ -86,6 +86,11 @@ import org.javatari.utils.Debugger;
 
 
 public final class M6502 implements ClockDriven {
+	int t;
+
+	public int getT() { return t; }
+
+	public int getPC() { return PC; }
 
 	public M6502() {
 	}
@@ -265,6 +270,26 @@ public final class M6502 implements ClockDriven {
 			c.connectBus(t.clone());
 			c.step();
 		}
+		c.t = t + 1;
+		return c;
+	}
+
+	public M6502 setInput(int i) {
+		byte controller = (byte)(i >> 16);
+		byte switches = (byte)(i >> 8);
+		byte paddle = (byte)i;
+		M6502State s = saveState();
+		M6502 c = new M6502();
+		c.loadState(s);
+		if (bus.getClass().isAssignableFrom(Trick2600.class)) {
+			Trick2600 t = (Trick2600)bus;
+			Trick2600 tc = (Trick2600)t.clone();
+			tc.writeByte(640, controller);
+			tc.writeByte(642, switches);
+			tc.writeByte(12, paddle);
+			c.connectBus(tc);
+		}
+		c.t = t;
 		return c;
 	}
 
@@ -288,8 +313,9 @@ public final class M6502 implements ClockDriven {
 
 	public String printState() {
 		String str = "";
-		str = str + 
-		"A: " + String.format("%02x", A) +
+		str = str +
+		"T: " + String.format("%05x", t) +
+		", A: " + String.format("%02x", A) +
 		", X: " + String.format("%02x", X) +
 		", Y: " + String.format("%02x", Y) +
 		", SP: " + String.format("%02x", SP) +

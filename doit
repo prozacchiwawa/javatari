@@ -1,0 +1,3 @@
+#!/bin/sh
+
+./fregec ./ITest.fr && ./runfrege examples.ITest
