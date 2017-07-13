@@ -84,83 +84,259 @@ doFrame cpu =
           --stdout.print $ (M6502.printState cpu) ++ "\n"
           doFrame (M6502.next cpu)
 
+tach = 0xa8
+speed = 0xb1
+
+test =
+    [
+     3,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     3,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     0,
+     1,
+     3,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     3,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     3,
+     1,
+     1,
+     1,
+     1,
+     3,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     3,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     3,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     3,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     3,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2,
+     2,
+     2,
+     3,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     3,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     3,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     3,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     3,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     3
+    ]
+
+mapInput i =
+    case i of
+      0 -> 0xffffff
+      1 -> 0xffff7f
+      2 -> 0xbfffff
+      _ -> 0xbfff7f
+
+-- $8D <- race start countdown
+      
+known endbus n =
+    let row a =
+            [ (Trick2600.readByte endbus (a + 0)),
+              (Trick2600.readByte endbus (a + 1)),
+              (Trick2600.readByte endbus (a + 2)),
+              (Trick2600.readByte endbus (a + 3)),
+              (Trick2600.readByte endbus (a + 4)),
+              (Trick2600.readByte endbus (a + 5)),
+              (Trick2600.readByte endbus (a + 6)),
+              (Trick2600.readByte endbus (a + 7)),
+            ]
+    in
+    "Speed " ++ (show (Trick2600.readByte endbus (0xa8 + n))) ++ "\n" ++
+    "Timer " ++ (show (Trick2600.readByte endbus (0xb3 + n))) ++ "-" ++
+        (show (Trick2600.readByte endbus (0xb5 + n))) ++ "-" ++
+        (show (Trick2600.readByte endbus (0xb7 + n))) ++ "\n" ++
+    "Tach " ++ (show (Trick2600.readByte endbus (0xa8 + n))) ++ "\n" ++
+    "Position " ++ (show (Trick2600.readByte endbus (0xba + n))) ++ "-" ++ (show (Trick2600.readByte endbus (0xc2 + n))) ++ "\n" ++
+    "Row " ++ (show (row 0x80)) ++ "\n" ++
+    "Row " ++ (show (row 0x88)) ++ "\n" ++
+    "Row " ++ (show (row 0x90)) ++ "\n" ++
+    "Row " ++ (show (row 0x98)) ++ "\n" ++
+    "Row " ++ (show (row 0xa0)) ++ "\n" ++
+    "Row " ++ (show (row 0xa8)) ++ "\n" ++
+    "Row " ++ (show (row 0xb0)) ++ "\n" ++
+    "Row " ++ (show (row 0xb8)) ++ "\n" ++
+    "Row " ++ (show (row 0xc0)) ++ "\n" ++
+    "Row " ++ (show (row 0xc8)) ++ "\n" ++
+    "Row " ++ (show (row 0xd0)) ++ "\n" ++
+    "Row " ++ (show (row 0xd8))
+
 doOneFrame v cpu =
-    let playerdata endbus n =
-            [
-             Trick2600.readByte endbus (0x90 + n),
-             Trick2600.readByte endbus (0x92 + n),
-             Trick2600.readByte endbus (0x94 + n),
-             Trick2600.readByte endbus (0x96 + n),
-             Trick2600.readByte endbus (0x98 + n),
-             Trick2600.readByte endbus (0x9a + n),
-             Trick2600.readByte endbus (0x9c + n),
-             Trick2600.readByte endbus (0x9e + n),
-             Trick2600.readByte endbus (0xa0 + n),
-             Trick2600.readByte endbus (0xa2 + n),
-             Trick2600.readByte endbus (0xa4 + n),
-             Trick2600.readByte endbus (0xa6 + n),
-             Trick2600.readByte endbus (0xa8 + n),
-             Trick2600.readByte endbus (0xad + n),
-             Trick2600.readByte endbus (0xb1 + n),
-             Trick2600.readByte endbus (0xb3 + n),
-             Trick2600.readByte endbus (0xb5 + n),
-             Trick2600.readByte endbus (0xb7 + n),
-             Trick2600.readByte endbus (0xaa + n),
-             Trick2600.readByte endbus (0xba + n),
-             Trick2600.readByte endbus (0xbc + n),
-             Trick2600.readByte endbus (0xbe + n),
-             Trick2600.readByte endbus (0xc0 + n),
-             Trick2600.readByte endbus (0xc2 + n),
-             Trick2600.readByte endbus (0xc4 + n),
-             Trick2600.readByte endbus (0xc6 + n),
-             Trick2600.readByte endbus (0xc8 + n),
-             Trick2600.readByte endbus (0xca + n),
-             Trick2600.readByte endbus (0xcc + n),
-             Trick2600.readByte endbus (0xce + n),
-             Trick2600.readByte endbus (0xd0 + n),
-             Trick2600.readByte endbus (0xd2 + n),
-             Trick2600.readByte endbus (0xd4 + n)
-            ]
-    in
-    let basedata endbus =
-            [
-             Trick2600.readByte endbus 0x80,
-             Trick2600.readByte endbus 0x81,
-             Trick2600.readByte endbus 0x82,
-             Trick2600.readByte endbus 0x83,
-             Trick2600.readByte endbus 0x84,
-             Trick2600.readByte endbus 0x85,
-             Trick2600.readByte endbus 0x86,
-             Trick2600.readByte endbus 0x87,
-             Trick2600.readByte endbus 0x88,
-             Trick2600.readByte endbus 0x89,
-             Trick2600.readByte endbus 0x8a,
-             Trick2600.readByte endbus 0x8b,
-             Trick2600.readByte endbus 0x8c,
-             Trick2600.readByte endbus 0x8d,
-             Trick2600.readByte endbus 0x8e,
-             Trick2600.readByte endbus 0x8f
-            ]
-    in
     do
       (reset,endcpu) <- doFrame (M6502.setInput (M6502.next cpu) v)
       endbus <- pure $ M6502.getCurrentBus endcpu
+      win <- pure $ (Byte.unsigned (Trick2600.readByte endbus 0xba)) >= 97
+      lose <- pure $ Byte.unsigned (Trick2600.readByte endbus (0xa8)) >= 32
       stdout.print $ "Input " ++ (Int.toHexString v) ++ "\n"
       stdout.print $ (M6502.printState endcpu) ++ "\n"
-      stdout.print $ (show (basedata endbus)) ++ "\n"
-      stdout.print $ (show (playerdata endbus 0)) ++ "\n"
-      stdout.print $ (show (playerdata endbus 1)) ++ "\n"
-      pure (reset,endcpu)
+      stdout.print $ (known endbus 0) ++ "\n"
+      pure (win || lose || reset,endcpu)
       
-doFrames inputs cpu =
+doFrames n inputs cpu =
     case inputs of
       hd : tl ->
           do
+            stdout.print $ "Frame " ++ (show n) ++ "\n"
             (reset,fcpu) <- doOneFrame hd cpu
             if reset then
                 pure fcpu
             else
-                doFrames tl fcpu
+                doFrames (n + 1) tl fcpu
       [] ->
           do
             pure cpu
@@ -172,14 +348,18 @@ button = 0xffff7f
 buttonLeft = 0xbfff7f
 reset = 0xfffeff
 
-times n v = if n == 0 then [] else (v : (times (n-1) v))
-            
-inputs = 
-    (times 1 quiet) ++ (times 1 jsRight) ++ (times 1000 quiet) ++ (times 1 buttonLeft) ++ (times 20 button)
+double t =
+    case t of
+      x : xs -> x : x : (double xs)
+      [] -> []
         
+times n v = if n == 0 then [] else (v : (times (n-1) v))
+inputs =
+    (times 2 jsRight) ++ (times 160 quiet) ++ (double (map mapInput test))
+            
 main _ =
     let trick = Trick2600.new "snoop/Dragster.bin" in
     let cpu = M6502.setInput (M6502.withBus (M6502.new ()) trick) quiet in
     do
-      ncpu <- doFrames inputs (doPreamble (M6502.next cpu))
+      ncpu <- doFrames 0 inputs (doPreamble (M6502.next cpu))
       stdout.print $ "end-cpu " ++ (M6502.printState ncpu) ++ "\n"
