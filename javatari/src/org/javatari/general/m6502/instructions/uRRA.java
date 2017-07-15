@@ -50,7 +50,7 @@ public final class uRRA extends Instruction {
 		cpu.setZERO(newA == 0);
 
 		// But the others flags and the ACC are computed differently in Decimal Mode
-		if (!cpu.DECIMAL_MODE) {
+		if (!cpu.isDECIMAL_MODE()) {
 			cpu.setNEGATIVE(newA < 0);
 			cpu.setOVERFLOW(aux > 127 || aux < -128);
 			cpu.setCARRY(uAux > 0xff);

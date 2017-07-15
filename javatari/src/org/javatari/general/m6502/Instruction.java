@@ -14,6 +14,8 @@ public abstract class Instruction implements Serializable, Cloneable {
 
 	public abstract void execute();
 
+	public int branchTarget() { return -1; }
+
 	@Override
 	protected Instruction clone() {
 		try { 
@@ -23,6 +25,7 @@ public abstract class Instruction implements Serializable, Cloneable {
 		}
 	}
 
+	public String getName() { return getClass().getSimpleName(); }
 
 	protected transient M6502 cpu;
 

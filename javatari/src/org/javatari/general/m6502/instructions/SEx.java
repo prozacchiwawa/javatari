@@ -24,7 +24,7 @@ public final class SEx extends Instruction {
 	@Override
 	public void execute() {
 		if (bit == bCARRY) 					cpu.setCARRY(true);
-		else if (bit == bDECIMAL_MODE) 		cpu.DECIMAL_MODE = true;
+		else if (bit == bDECIMAL_MODE) 		cpu.setDECIMAL_MODE(true);
 		else if (bit == bINTERRUPT_DISABLE)	cpu.INTERRUPT_DISABLE = true;
 		else throw new IllegalStateException("SEx Invalid StatusBit: " + bit);
 	}

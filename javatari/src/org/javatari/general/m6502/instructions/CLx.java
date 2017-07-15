@@ -26,7 +26,7 @@ public final class CLx extends Instruction {
 	@Override
 	public void execute() {
 		if (bit == bCARRY) 					{ cpu.setCARRY(false); }
-		else if (bit == bDECIMAL_MODE) 		{ cpu.DECIMAL_MODE = false; }
+		else if (bit == bDECIMAL_MODE) 		{ cpu.setDECIMAL_MODE(false); }
 		else if (bit == bINTERRUPT_DISABLE) { cpu.INTERRUPT_DISABLE = false; }
 		else if (bit == bOVERFLOW) 			{ cpu.setOVERFLOW(false); }
 		else throw new IllegalStateException("CLx Invalid StatusBit: " + bit);

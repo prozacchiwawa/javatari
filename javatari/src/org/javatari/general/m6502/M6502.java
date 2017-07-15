@@ -87,6 +87,7 @@ import org.javatari.utils.Debugger;
 
 public final class M6502 implements ClockDriven {
 	int t;
+    int frame;
 
 	public int getT() { return t; }
 
@@ -97,6 +98,7 @@ public final class M6502 implements ClockDriven {
 
 	public void connectBus(BUS16Bits bus) {
 		this.bus = bus;
+		currentInstruction = instructions(toUnsignedByte(bus.readByte(PC)));	// Reads the instruction to be executed
 	}
 	public BUS16Bits getBus() { return bus; }
 	public M6502 withBus(BUS16Bits bus) {
@@ -124,6 +126,35 @@ public final class M6502 implements ClockDriven {
 			return;
 		}
 		if (!RDY) return;						// CPU is halted
+
+        if ((getPC() & 0xfff) == 0x2cb && remainingCycles == 0) {
+        	int controller = bus.readByte(0x280);
+        	int switches = bus.readByte(0x282);
+        	int paddle = bus.readByte(12);
+        	int input = ((controller & 0xff) << 16) | ((switches & 0xff) << 8) | (paddle & 0xff);
+            System.out.println("Frame " + frame++);
+			System.out.println("Input " + String.format("%06x", input));
+            System.out.println(printState());
+            System.out.println("Timer " + String.format("0x%02x", bus.readByte(0xb3)) + "-" + String.format("0x%02x", bus.readByte(0xb5)) + "-" + String.format("0x%02x", bus.readByte(0xb7)));
+            System.out.println("Position " + String.format("0x%02x", bus.readByte(0xba)) + "-" + String.format("0x%02x", bus.readByte(0xc2)));
+            int i;
+            for (i = 0x80; i < 0xe0; i++) {
+                byte b = bus.readByte(i);
+                if (i % 8 == 0) {
+                    if (i != 0x80) {
+                        System.out.println("]");
+                    }
+                    System.out.print(String.format("%02x", i) + " [");
+                }
+                System.out.print(String.format("0x%02x", (int)b & 0xff));
+                if ((i % 8) != 7) {
+                    System.out.print(", ");
+                }
+            }
+            System.out.println("]");
+            System.out.flush();
+        }
+            
 		if (remainingCycles-- > 0) return;		// CPU is still "executing" remaining instruction cycles
 		currentInstruction = instructions(toUnsignedByte(bus.readByte(PC++)));	// Reads the instruction to be executed
 		remainingCycles = currentInstruction.fetch() - 1;						// One cycle was just executed already!
@@ -248,7 +279,7 @@ public final class M6502 implements ClockDriven {
 
 	public byte PS() {
 		byte b = (byte)(
-			(NEGATIVE ?0x80:0) | (OVERFLOW ?0x40:0) | (DECIMAL_MODE?0x08:0) |
+			(NEGATIVE ?0x80:0) | (OVERFLOW ?0x40:0) | (DECIMAL_MODE ?0x08:0) |
 			(INTERRUPT_DISABLE?0x04:0) | (ZERO ?0x02:0) | (CARRY ?0x01:0) |
 			BREAK_COMMAND_FLAG	// Software instructions always push PS with BREAK_COMMAND set;
 		);
@@ -274,6 +305,28 @@ public final class M6502 implements ClockDriven {
 		return c;
 	}
 
+	public M6502[] futures() {
+		M6502State s = saveState();
+		M6502 c = new M6502();
+		c.loadState(s);
+		if (bus.getClass().isAssignableFrom(Trick2600.class)) {
+			Trick2600 t = (Trick2600)bus;
+			c.connectBus(t.clone());
+			int []f = c.getFuturePC();
+			M6502 []res = new M6502[f.length];
+			for (int i = 0; i < f.length; i++) {
+				s.PC = f[i];
+				c = new M6502();
+				c.loadState(s);
+				c.connectBus(t.clone());
+				c.step();
+				res[i] = c;
+			}
+			return res;
+		}
+		return new M6502[] { c };
+	}
+
 	public M6502 setInput(int i) {
 		byte controller = (byte)(i >> 16);
 		byte switches = (byte)(i >> 8);
@@ -291,6 +344,18 @@ public final class M6502 implements ClockDriven {
 		}
 		c.t = t;
 		return c;
+	}
+
+	public int []getFuturePC() {
+		Instruction i = instructions(toUnsignedByte(bus.readByte(PC++)));	// Reads the instruction to be executed
+		i.fetch();
+		int unbranched = PC;
+		int branched = i.branchTarget();
+		if (branched != -1) {
+			return new int [] { unbranched, branched };
+		} else {
+			return new int [] { unbranched };
+		}
 	}
 
 	public void step() {
@@ -314,7 +379,7 @@ public final class M6502 implements ClockDriven {
 	public String printState() {
 		String str = "";
 		str = str +
-		"T: " + String.format("%05x", t) +
+		"T: " + String.format("%05x", 0) +
 		", A: " + String.format("%02x", A) +
 		", X: " + String.format("%02x", X) +
 		", Y: " + String.format("%02x", Y) +
@@ -386,7 +451,7 @@ public final class M6502 implements ClockDriven {
 	private boolean ZERO;
 	private boolean OVERFLOW;
 	private boolean NEGATIVE;
-	public boolean DECIMAL_MODE;
+	private boolean DECIMAL_MODE;
 	public boolean INTERRUPT_DISABLE;
 	public boolean RDY;		// RDY pin, used to halt the processor
 	public BUS16Bits bus;
@@ -403,7 +468,7 @@ public final class M6502 implements ClockDriven {
 	// Instructions map. # = Undocumented Instruction
 	
 	public Instruction instructions(int i) {
-		switch (i) {
+		switch (i & 0xff) {
         case 0x00: /* - BRK                  */  return new BRK(this);
         case 0x01: /* - ORA  - (Indirect,X)  */  return new ORA(this, IND_X);
         case 0x02: /* - uKIL                 */  return new uKIL(this);
@@ -683,12 +748,8 @@ public final class M6502 implements ClockDriven {
 		return i & 0xff;
 	}
 
-	private boolean RA, RX, RY, rC, rZ, rV, rN, RSP;
-	private boolean wA, wX, wY, wC, wZ, wV, wN, wSP;
-
-	public void resetAccessed() {
-		RA = RX = RY = rC = rZ = rV = rN = wA = wX = wY = wC = wZ = wV = wN = RSP = wSP = false;
-	}
+	private boolean RA, RX, RY, rC, rZ, rV, rN, rD, RSP;
+	private boolean wA, wX, wY, wC, wZ, wV, wN, wD, wSP;
 
 	public String[] getInstructionSources() {
 		String[] res = {
@@ -698,6 +759,7 @@ public final class M6502 implements ClockDriven {
 				rC ? "rC" : "",
 				rZ ? "rZ" : "",
 				rV ? "rV" : "",
+				rD ? "rD" : "",
 				RSP ? "rSP" : "",
 
 				wA ? "wA" : "",
@@ -706,6 +768,7 @@ public final class M6502 implements ClockDriven {
 				wC ? "wC" : "",
 				wZ ? "wZ" : "",
 				wV ? "wV" : "",
+				wD ? "wD" : "",
 				wSP ? "wSP" : "",
 		};
 		return res;
@@ -789,6 +852,16 @@ public final class M6502 implements ClockDriven {
 	public void setNEGATIVE(boolean NEGATIVE) {
 		wN = true;
 		this.NEGATIVE = NEGATIVE;
+	}
+
+	public boolean isDECIMAL_MODE() {
+		rD = true;
+		return DECIMAL_MODE;
+	}
+
+	public void setDECIMAL_MODE(boolean DECIMAL_MODE) {
+		wD = true;
+		this.DECIMAL_MODE = DECIMAL_MODE;
 	}
 
 	// Used to save/load states

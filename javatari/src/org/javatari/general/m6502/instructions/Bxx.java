@@ -20,6 +20,11 @@ public final class Bxx extends Instruction {
 	}
 
 	@Override
+	public int branchTarget() {
+		return newPC;
+	}
+
+	@Override
 	public int fetch() {
 		newPC = cpu.fetchRelativeAddress();		// Reads operand regardless of the branch being taken or not
 		if (bit == bZERO) 			{ branch = cpu.isZERO() == cond; }

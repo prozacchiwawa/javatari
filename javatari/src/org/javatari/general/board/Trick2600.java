@@ -13,13 +13,13 @@ import java.util.Map;
  * Created by arty on 7/12/17.
  */
 public class Trick2600 implements BUS16Bits {
-    int cycle;
     byte []arr = new byte[256 + 32];
     byte []rom;
     HashMap<Integer, Boolean> r = new HashMap<Integer,Boolean>();
     HashMap<Integer, Boolean> w = new HashMap<Integer,Boolean>();
 
-    public Trick2600() { }
+    public Trick2600() {
+    }
     public Trick2600(Trick2600 t) {
         arr = t.arr.clone();
         rom = t.rom;
@@ -70,8 +70,10 @@ public class Trick2600 implements BUS16Bits {
         } else if (address >= 0x280 && address < 0x2a0) {
             r.put(address, true);
             return arr[address - 0x180];
-        } else {
+        } else if (address >= 0x1000) {
             return rom[address & 0xfff];
+        } else {
+            return 0;
         }
     }
 
@@ -80,8 +82,11 @@ public class Trick2600 implements BUS16Bits {
         System.out.flush();
         address &= 0x1fff;
         if (address < 0x200) {
-            w.put(address & 0xff, true);
-            arr[address & 0xff] = b;
+            address &= 0xff;
+            if (address >= 0x80) {
+                w.put(address & 0xff, true);
+                arr[address & 0xff] = b;
+            }
         } else if (address >= 0x280 && address < 0x2a0) {
             arr[address - 0x180] = b;
         }

@@ -51,7 +51,7 @@ public final class uISB extends Instruction {
 		cpu.setCARRY(!(uAux < 0));
 
 		// But the ACC is computed differently in Decimal Mode
-		if (!cpu.DECIMAL_MODE) {
+		if (!cpu.isDECIMAL_MODE()) {
 			cpu.setA(newA);
 			return;
 		}

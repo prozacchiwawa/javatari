@@ -74,15 +74,26 @@ public final class PIA implements BUS16Bits, ClockDriven, ConsoleControlsInput {
 	
 	@Override
 	public byte readByte(int address) {
+		byte res =  _readByte(address);
+		int pc = bus.cpu.getPC();
+		if (address != 4 && address != 6 || (pc != 0xf046 && pc != 0xf285)) {
+			System.out.println(String.format("%04x: ", bus.cpu.getPC()) + ": PIA read " + String.format("%02x", address) + " -> " + String.format("%02x", (int) res));
+			System.out.flush();
+		}
+		return res;
+	}
+
+	public byte _readByte(int address) {
 		final int reg = address & ADDRESS_MASK;
 
-		if (reg == 0x04 || reg == 0x06) { readFromINTIM(); return (byte) INTIM; }								
+		if (reg == 0x04 || reg == 0x06) { readFromINTIM(); return (byte) INTIM; }
+
 		if (reg == 0x00) return (byte) SWCHA;
 		if (reg == 0x02) return (byte) SWCHB;
 		if (reg == 0x01) return (byte) SWACNT;
 		if (reg == 0x03) return (byte) SWBCNT;
 		if (reg == 0x05 || reg == 0x07) return (byte) INSTAT;						// Undocumented
-		
+
 		// debugInfo(String.format("Invalid PIA read register address: %04x", address)); 
 		return 0;
 	}

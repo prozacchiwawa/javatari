@@ -91,6 +91,7 @@ public final class TIA implements BUS16Bits, ClockDriven, ConsoleControlsInput {
 			bus.clockPulse();
 			// Releases the CPU at the beginning of the line in case a WSYNC has halted it
 			if (!bus.cpu.RDY) bus.cpu.RDY = true;
+
 			// HBLANK period
 			for (clock = 3; clock < HBLANK_DURATION; clock += 3) {		// 3 .. 66
 				if (!repeatLastLine) checkRepeatMode();
