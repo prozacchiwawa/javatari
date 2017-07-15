@@ -30,7 +30,7 @@ public final class CPx extends Instruction {
 
 	@Override
 	public void execute() {
-		int uVal = M6502.toUnsignedByte(cpu.bus.readByte(ea)); 
+		int uVal = M6502.toUnsignedByte(cpu.readByte(ea));
 		int uR;
 		if (reg == Register.rA) 		uR = M6502.toUnsignedByte(cpu.getA());
 		else if (reg == Register.rX) 	uR = M6502.toUnsignedByte(cpu.getX());

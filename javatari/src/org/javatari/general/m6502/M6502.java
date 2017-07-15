@@ -25,6 +25,8 @@ import static org.javatari.general.m6502.StatusBit.bOVERFLOW;
 import static org.javatari.general.m6502.StatusBit.bZERO;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.javatari.general.board.BUS16Bits;
 import org.javatari.general.board.Clock;
@@ -88,6 +90,27 @@ import org.javatari.utils.Debugger;
 public final class M6502 implements ClockDriven {
 	int t;
     int frame;
+    int writes, reads;
+    int w0, w1;
+    int r0, r1;
+
+    public void writeByte(int address, byte b) {
+		if (writes++ == 0) {
+			w0 = address;
+		} else {
+			w1 = address;
+		}
+    	bus.writeByte(address, b);
+	}
+
+	public byte readByte(int address) {
+		if (reads++ == 0) {
+			r0 = address;
+		} else {
+			r1 = address;
+		}
+    	return bus.readByte(address);
+	}
 
 	public int getT() { return t; }
 
@@ -98,7 +121,6 @@ public final class M6502 implements ClockDriven {
 
 	public void connectBus(BUS16Bits bus) {
 		this.bus = bus;
-		currentInstruction = instructions(toUnsignedByte(bus.readByte(PC)));	// Reads the instruction to be executed
 	}
 	public BUS16Bits getBus() { return bus; }
 	public M6502 withBus(BUS16Bits bus) {
@@ -171,7 +193,20 @@ public final class M6502 implements ClockDriven {
 		RDY = true;
 		reset();
 	}
-	
+
+	public int[] getReads() {
+		if (reads == 0) { return new int [] { }; }
+		else if (reads == 1) { return new int [] { r0 }; }
+		else { return new int [] { r0, r1 }; }
+	}
+
+	public int[] getWrites() {
+		if (writes == 0) { return new int [] { }; }
+		else if (writes == 1) { return new int [] { w0 }; }
+		else { return new int [] { w0, w1 }; }
+	}
+
+
 	public void powerOff() {
 		// Nothing
 	}
@@ -243,7 +278,7 @@ public final class M6502 implements ClockDriven {
 	}
 
 	public int memoryReadWord(int address) {
-		return toUnsignedByte(bus.readByte(address)) | (toUnsignedByte(bus.readByte(address + 1)) << 8);	// Address + 1 may wrap, LSB first
+		return toUnsignedByte(readByte(address)) | (toUnsignedByte(readByte(address + 1)) << 8);	// Address + 1 may wrap, LSB first
 	}
 
 	public int memoryReadWordWrappingPage(int address) {	// Accounts for the page-cross problem  (should wrap page)
@@ -255,17 +290,17 @@ public final class M6502 implements ClockDriven {
 	}
 
 	public void pushByte(byte b) {
-		bus.writeByte(STACK_PAGE + toUnsignedByte(getSP()), b);
+		writeByte(STACK_PAGE + toUnsignedByte(getSP()), b);
 		setSP((byte)(getSP() - 1));
 	}
 
 	public void dummyStackRead() {
-		bus.readByte(STACK_PAGE + toUnsignedByte(getSP()));		// Additional dummy stack read before SP increment, discard data
+		readByte(STACK_PAGE + toUnsignedByte(getSP()));		// Additional dummy stack read before SP increment, discard data
 	}
 	
 	public byte pullByte() {
 		setSP((byte)(getSP() + 1));
-		return bus.readByte(STACK_PAGE + toUnsignedByte(getSP()));
+		return readByte(STACK_PAGE + toUnsignedByte(getSP()));
 	}
 	
 	public void pushWord(int w) {
@@ -361,6 +396,7 @@ public final class M6502 implements ClockDriven {
 	public void step() {
 		currentInstruction = instructions(toUnsignedByte(bus.readByte(PC++)));	// Reads the instruction to be executed
 		currentInstruction.fetch();
+		reads = writes = 0;
 		currentInstruction.execute();
 	}
 
@@ -454,7 +490,7 @@ public final class M6502 implements ClockDriven {
 	private boolean DECIMAL_MODE;
 	public boolean INTERRUPT_DISABLE;
 	public boolean RDY;		// RDY pin, used to halt the processor
-	public BUS16Bits bus;
+	private BUS16Bits bus;
 
 
 	// Auxiliary flags and variables for internal, debugging and instructions use
@@ -463,7 +499,7 @@ public final class M6502 implements ClockDriven {
 	public boolean debug = false;
 	public boolean pageCrossed = false;
 	private int remainingCycles = -1;
-	private Instruction currentInstruction;
+	private Instruction currentInstruction = instructions(0);
 
 	// Instructions map. # = Undocumented Instruction
 	

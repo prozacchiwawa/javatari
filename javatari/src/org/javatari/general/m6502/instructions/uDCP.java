@@ -30,8 +30,8 @@ public final class uDCP extends Instruction {
 
 	@Override
 	public void execute() {
-		final byte val = (byte) (cpu.bus.readByte(ea) - 1); 
-		cpu.bus.writeByte(ea, val);
+		final byte val = (byte) (cpu.readByte(ea) - 1);
+		cpu.writeByte(ea, val);
 		int uVal = M6502.toUnsignedByte(val); 
 		int uA = M6502.toUnsignedByte(cpu.getA());
 		cpu.setCARRY(uA >= uVal);

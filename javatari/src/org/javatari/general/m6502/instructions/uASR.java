@@ -21,7 +21,7 @@ public final class uASR extends Instruction {
 
 	@Override
 	public void execute() {
-		byte val = (byte) (cpu.getA() & cpu.bus.readByte(ea));
+		byte val = (byte) (cpu.getA() & cpu.readByte(ea));
 		cpu.setCARRY((val & 0x01) > 0);		// bit 0 was set
 		val = (byte) ((val & 0xff) >>> 1);
 		cpu.setA(val);

@@ -22,7 +22,7 @@ public final class uARR extends Instruction {
 	@Override
 	// Some sources say flags are affected per ROR, others say its more complex. The complex one is chosen
 	public void execute() {
-		byte val = (byte) (cpu.getA() & cpu.bus.readByte(ea));
+		byte val = (byte) (cpu.getA() & cpu.readByte(ea));
 		int oldCarry = cpu.isCARRY() ? 0x80 : 0;
 
 		// Per ROR

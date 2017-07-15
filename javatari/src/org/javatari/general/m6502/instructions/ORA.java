@@ -28,7 +28,7 @@ public final class ORA extends Instruction {
 
 	@Override
 	public void execute() {
-		final byte val = (byte) (cpu.getA() | cpu.bus.readByte(ea));
+		final byte val = (byte) (cpu.getA() | cpu.readByte(ea));
 		cpu.setA(val);
 		cpu.setZERO(val == 0);
 		cpu.setNEGATIVE(val < 0);

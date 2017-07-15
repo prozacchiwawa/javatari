@@ -26,7 +26,7 @@ public final class uSHA extends Instruction {
 	@Override
 	public void execute() {
 		final byte val = (byte) (cpu.getA() & cpu.getX() & (byte)(((ea >>> 8) & 0xff) + 1));  // A & X & (High byte of address + 1) !!!
-		cpu.bus.writeByte(ea, val);
+		cpu.writeByte(ea, val);
 	}
 
 	private final int type;

@@ -24,8 +24,8 @@ public final class DEC extends Instruction {
 
 	@Override
 	public void execute() {
-		final byte val = (byte) (cpu.bus.readByte(ea) - 1); 
-		cpu.bus.writeByte(ea, val);
+		final byte val = (byte) (cpu.readByte(ea) - 1);
+		cpu.writeByte(ea, val);
 		cpu.setZERO(val == 0);
 		cpu.setNEGATIVE(val < 0);
 	}

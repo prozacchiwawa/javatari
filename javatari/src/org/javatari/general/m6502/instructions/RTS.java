@@ -20,7 +20,7 @@ public final class RTS extends Instruction {
 	public void execute() {
 		cpu.dummyStackRead();
 		cpu.PC = cpu.pullWord();
-		cpu.bus.readByte(cpu.PC++);		// Perform a dummy PC read before PC increment, discard data
+		cpu.readByte(cpu.PC++);		// Perform a dummy PC read before PC increment, discard data
 	}
 
 	public static final long serialVersionUID = 1L;

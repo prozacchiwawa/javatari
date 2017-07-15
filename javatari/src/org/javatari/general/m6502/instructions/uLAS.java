@@ -21,7 +21,7 @@ public final class uLAS extends Instruction {
 	
 	@Override
 	public void execute() {
-		final byte val = (byte) (cpu.getSP() & cpu.bus.readByte(ea));
+		final byte val = (byte) (cpu.getSP() & cpu.readByte(ea));
 		cpu.setA(val);
 		cpu.setX(val);
 		cpu.setSP(val);

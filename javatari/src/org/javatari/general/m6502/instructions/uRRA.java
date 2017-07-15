@@ -30,11 +30,11 @@ public final class uRRA extends Instruction {
 
 	@Override
 	public void execute() {
-		byte val = cpu.bus.readByte(ea); 
+		byte val = cpu.readByte(ea);
 		final int oldCarry = cpu.isCARRY() ? 0x80 : 0;
 		cpu.setCARRY((val & 0x01) != 0);		// bit 0 was set
 		val = (byte) (((val & 0xff) >>> 1) | oldCarry);
-		cpu.bus.writeByte(ea, val);
+		cpu.writeByte(ea, val);
 
 		// Same as ADC from here
 		final int b = val;

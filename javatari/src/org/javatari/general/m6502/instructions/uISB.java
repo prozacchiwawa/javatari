@@ -30,8 +30,8 @@ public final class uISB extends Instruction {
 
 	@Override
 	public void execute() {
-		final byte val = (byte) (cpu.bus.readByte(ea) + 1); 
-		cpu.bus.writeByte(ea, val);
+		final byte val = (byte) (cpu.readByte(ea) + 1);
+		cpu.writeByte(ea, val);
 
 		// Same as SBC from here
 		final int b = val;

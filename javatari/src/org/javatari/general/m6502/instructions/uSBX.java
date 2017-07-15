@@ -23,7 +23,7 @@ public final class uSBX extends Instruction {
 	public void execute() {
 		byte b = (byte) (cpu.getA() & cpu.getX());
 		int uB = M6502.toUnsignedByte(b);
-		int uVal = M6502.toUnsignedByte(cpu.bus.readByte(ea)); 
+		int uVal = M6502.toUnsignedByte(cpu.readByte(ea));
 		byte newX = (byte)(uB - uVal);
 		cpu.setX(newX);
 		

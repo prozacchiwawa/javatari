@@ -22,7 +22,7 @@ public final class uLXA extends Instruction {
 	@Override
 	// Some sources say its an OR with $EE then AND with IMM, others exclude the OR, others exclude both the OR and the AND. Excluding just the OR
 	public void execute() {
-		byte val = (byte) (cpu.getA() /* | 0xEE) */ & cpu.bus.readByte(ea));
+		byte val = (byte) (cpu.getA() /* | 0xEE) */ & cpu.readByte(ea));
 		cpu.setA(val);
 		cpu.setX(val);
 		cpu.setZERO(val == 0);

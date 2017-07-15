@@ -36,12 +36,12 @@ public final class ASL extends Instruction {
 			cpu.setZERO(val == 0);
 			cpu.setNEGATIVE(val < 0);
 		} else {
-			byte val = cpu.bus.readByte(ea); 
+			byte val = cpu.readByte(ea);
 			cpu.setCARRY(val < 0);		// bit 7 was set
 			val = (byte) (val << 1);
 			cpu.setZERO(val == 0);
 			cpu.setNEGATIVE(val < 0);
-			cpu.bus.writeByte(ea, val);
+			cpu.writeByte(ea, val);
 		}
 	}
 

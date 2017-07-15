@@ -30,10 +30,10 @@ public final class uSLO extends Instruction {
 
 	@Override
 	public void execute() {
-		byte val = cpu.bus.readByte(ea); 
+		byte val = cpu.readByte(ea);
 		cpu.setCARRY(val < 0);		// bit 7 was set
 		val = (byte) (val << 1);
-		cpu.bus.writeByte(ea, val);
+		cpu.writeByte(ea, val);
 
 		val = (byte) (cpu.getA() | val);
 		cpu.setA(val);

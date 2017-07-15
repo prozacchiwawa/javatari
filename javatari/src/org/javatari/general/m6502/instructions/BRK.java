@@ -16,7 +16,7 @@ public final class BRK extends Instruction {
 	public int fetch() {
 		// BRK requires one extra unused byte after the opcode, as per specification
 		// Lets use this byte as a parameter for debug purposes!
-		par = M6502.toUnsignedByte(cpu.bus.readByte(cpu.fetchImmediateAddress()));	// This acts like a dummy PC read and increment
+		par = M6502.toUnsignedByte(cpu.readByte(cpu.fetchImmediateAddress()));	// This acts like a dummy PC read and increment
 
 		return 7;
 	}

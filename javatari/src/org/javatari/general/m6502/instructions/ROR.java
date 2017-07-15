@@ -37,13 +37,13 @@ public final class ROR extends Instruction {
 			cpu.setZERO(val == 0);
 			cpu.setNEGATIVE(val < 0);
 		} else { 
-			byte val = cpu.bus.readByte(ea); 
+			byte val = cpu.readByte(ea);
 			int oldCarry = cpu.isCARRY() ? 0x80 : 0;
 			cpu.setCARRY((val & 0x01) != 0);		// bit 0 was set
 			val = (byte) (((val & 0xff) >>> 1) | oldCarry);
 			cpu.setZERO(val == 0);
 			cpu.setNEGATIVE(val < 0);
-			cpu.bus.writeByte(ea, val);
+			cpu.writeByte(ea, val);
 		}
 	}
 

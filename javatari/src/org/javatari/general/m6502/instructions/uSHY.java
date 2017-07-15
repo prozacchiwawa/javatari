@@ -22,7 +22,7 @@ public final class uSHY extends Instruction {
 	@Override
 	public void execute() {
 		final byte val = (byte) (cpu.getY() & (byte)(((ea >>> 8) & 0xff) + 1));  // Y & (High byte of address + 1) !!!
-		cpu.bus.writeByte(ea, val);
+		cpu.writeByte(ea, val);
 	}
 
 	private int ea;

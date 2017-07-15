@@ -28,7 +28,7 @@ public final class uNOP extends Instruction {
 
 	@Override
 	public void execute() {
-		cpu.bus.readByte(ea);
+		cpu.readByte(ea);
 		// No effects besides fetching and reading memory
 	}
 

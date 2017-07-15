@@ -19,9 +19,9 @@ public final class JSR extends Instruction {
 
 	@Override
 	public void execute() {
-		byte PCL = cpu.bus.readByte(ea);
+		byte PCL = cpu.readByte(ea);
 		cpu.pushWord(cpu.PC);				// JSR should push the return address - 1
-		byte PCH = cpu.bus.readByte(ea + 1);
+		byte PCH = cpu.readByte(ea + 1);
 		cpu.PC = (M6502.toUnsignedByte(PCH) << 8) | M6502.toUnsignedByte(PCL);
 	}
 

@@ -36,12 +36,12 @@ public final class LSR extends Instruction {
 			cpu.setZERO(val == 0);
 			cpu.setNEGATIVE(false);
 		} else {
-			byte val = cpu.bus.readByte(ea); 
+			byte val = cpu.readByte(ea);
 			cpu.setCARRY((val & 0x01) != 0);		// bit 0 was set
 			val = (byte) ((val & 0xff) >>> 1);
 			cpu.setZERO(val == 0);
 			cpu.setNEGATIVE(false);
-			cpu.bus.writeByte(ea, val);
+			cpu.writeByte(ea, val);
 		}
 	}
 

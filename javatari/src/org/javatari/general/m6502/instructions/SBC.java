@@ -28,7 +28,7 @@ public final class SBC extends Instruction {
 
 	@Override
 	public void execute() {
-		final int b = cpu.bus.readByte(ea);
+		final int b = cpu.readByte(ea);
 		final int uB = M6502.toUnsignedByte(b);
 		final int oldA = cpu.getA();
 		final int uOldA = M6502.toUnsignedByte(oldA);

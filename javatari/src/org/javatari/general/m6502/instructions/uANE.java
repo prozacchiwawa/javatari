@@ -21,7 +21,7 @@ public final class uANE extends Instruction {
 
 	@Override
 	public void execute() {
-		cpu.bus.readByte(ea);
+		cpu.readByte(ea);
 		// Exact operation unknown. Lets do nothing!
 	}
 

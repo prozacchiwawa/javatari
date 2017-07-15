@@ -29,7 +29,7 @@ public final class uSAX extends Instruction {
 	// Some sources say it would affect N and Z flags, some say it wouldn't. Chose not to affect
 	public void execute() {
 		final byte val = (byte) (cpu.getA() & cpu.getX());
-		cpu.bus.writeByte(ea, val);
+		cpu.writeByte(ea, val);
 	}
 
 	private final int type;

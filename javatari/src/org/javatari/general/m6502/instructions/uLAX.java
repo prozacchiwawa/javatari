@@ -29,7 +29,7 @@ public final class uLAX extends Instruction {
 
 	@Override
 	public void execute() {
-		final byte val = cpu.bus.readByte(ea);
+		final byte val = cpu.readByte(ea);
 		cpu.setA(val);
 		cpu.setX(val);
 		cpu.setZERO(val == 0);
