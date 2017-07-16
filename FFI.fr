@@ -1,0 +1,25 @@
+module examples.FFI where
+
+data Instruction = native org.javatari.general.m6502.Instruction where
+     pure native fetch :: Instruction -> Int
+     pure native getName :: Instruction -> String
+     pure native toString :: Instruction -> String
+
+data M6502 = native org.javatari.general.m6502.M6502 where
+     pure native next :: M6502 -> M6502
+     pure native getInstructionSources :: M6502 -> JArray String
+     pure native getReads :: M6502 -> JArray Int
+     pure native getWrites :: M6502 -> JArray Int
+     pure native withBus :: M6502 -> Trick2600 -> M6502
+     pure native getCurrentBus :: M6502 -> Trick2600
+     pure native getCurrentInstruction :: M6502 -> Instruction
+     pure native printState :: M6502 -> String
+     pure native setInput :: M6502 -> Int -> M6502
+     pure native getPC :: M6502 -> Int
+     pure native futures :: M6502 -> JArray M6502
+     pure native new :: () -> M6502
+
+data Trick2600 = native org.javatari.general.board.Trick2600 where
+     pure native readByte :: Trick2600 -> Int -> Byte
+     pure native new :: String -> Trick2600
+

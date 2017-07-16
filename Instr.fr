@@ -1,0 +1,238 @@
+module examples.Instr where
+
+import examples.Util
+import examples.FFI
+import examples.Expr
+
+applyIncrement :: Int -> Expr -> Expr
+applyIncrement v e =
+    case e of
+      Const n -> Const (n+v)
+      Plus n a -> Plus (applyIncrement 1 n) a
+      e -> Plus (Const v) e
+      
+nc :: String -> CPU -> Mem -> [Int] -> [String] -> [String] -> CPU
+nc name ec em reads readSources writeSources =
+    let rme = readMemoryExprs em reads in
+    let rre = readRegisterExprs ec readSources in
+    getSourceForReg rme rre ec
+    where
+      doTransfer from into =
+          let fromval = exprOfCPU from ec in
+          ec &
+             cpuWithExpr into fromval &
+             cpuWithExpr "Z" (IsZero fromval) &
+             cpuWithExpr "N" (BitSet 7 fromval)
+
+      doLogical op from =
+          let fromval = (op (exprOfCPU "A" ec) (getMem from em)) in
+          ec &
+             cpuWithExpr "A" fromval &
+             cpuWithExpr "Z" (IsZero fromval) &
+             cpuWithExpr "N" (BitSet 7 fromval)
+
+      doBit from =
+          let fromval = (AND (exprOfCPU "A" ec) (getMem from em)) in
+          ec &
+             cpuWithExpr "A" fromval &
+             cpuWithExpr "Z" (IsZero fromval) &
+             cpuWithExpr "N" (BitSet 7 fromval) &
+             cpuWithExpr "V" (BitSet 6 fromval)
+
+      doCPx from r =
+          let a = exprOfCPU r ec in
+          let b = (Neg (getMem from em)) in
+          let val = Plus a b in
+          ec &
+             cpuWithExpr "N" (BitSet 7 val) &
+             cpuWithExpr "Z" (IsZero val) &
+             cpuWithExpr "C" (Borrow a b)
+
+      doShift op addr =
+          case addr of
+            Nothing ->
+                let unshifted = exprOfCPU "A" ec in
+                let shifted = op unshifted in
+                ec &
+                   cpuWithExpr "A" shifted &
+                   cpuWithExpr "Z" (IsZero shifted) &
+                   cpuWithExpr "C" (BitSet 0 unshifted)
+            Just addr ->
+                let unshifted = getMem addr em in
+                let shifted = op unshifted in
+                ec &
+                   cpuWithExpr "Z" (IsZero shifted) &
+                   cpuWithExpr "C" (BitSet 0 unshifted)
+
+      doINx i r =
+          let val = applyIncrement i (exprOfCPU r ec) in
+          ec &
+             cpuWithExpr r val &
+             cpuWithExpr "N" (BitSet 7 val) &
+             cpuWithExpr "Z" (IsZero val)
+
+      doLDx reg addr =
+          let val = getMem addr em in
+          ec &
+             cpuWithExpr reg val &
+             cpuWithExpr "N" (BitSet 7 val) &
+             cpuWithExpr "Z" (IsZero val)
+
+      doADC addr =
+          let d = exprOfCPU "D" ec in
+          let a = getMem addr em in
+          let b = exprOfCPU "A" ec in
+          let added = ADC d a b in
+          ec &
+             cpuWithExpr "A" added &
+             cpuWithExpr "Z" (BitSet 7 added) &
+             cpuWithExpr "C" (Carry d a b) &
+             cpuWithExpr "V" (Overflow d a b) &
+             cpuWithExpr "Z" (IsZero added)
+
+      doSBC addr =
+          let d = exprOfCPU "D" ec in
+          let a = getMem addr em in
+          let b = exprOfCPU "A" ec in
+          let added = ADC d a b in
+          ec &
+             cpuWithExpr "A" added &
+             cpuWithExpr "Z" (BitSet 7 added) &
+             cpuWithExpr "C" (Borrow a b) &
+             cpuWithExpr "V" (Overflow d a b) &
+             cpuWithExpr "Z" (IsZero added)
+                         
+      doINC inc addr =
+          let prev = getMem addr em in
+          let post = applyIncrement inc prev in
+          ec &
+             cpuWithExpr "N" (BitSet 7 post) &
+             cpuWithExpr "Z" (IsZero post)
+
+      doROL addr =
+          case addr of
+            Nothing ->
+                let prev = exprOfCPU "A" ec in
+                let val = OR (exprOfCPU "C" ec) prev in
+                ec &
+                   cpuWithExpr "A" val &
+                   cpuWithExpr "C" (BitSet 7 prev)
+            Just addr ->
+                let prev = getMem addr em in
+                let val = OR (exprOfCPU "C" ec) prev in
+                cpuWithExpr "C" (BitSet 7 prev) ec
+
+      getSourceForReg rme rre ec =
+          case name of
+            "ADC" ->
+                case reads of
+                  [a] -> doADC a
+            "AND" ->
+                case reads of
+                  [a] -> doLogical AND a
+            "ASL" ->
+                case (reads,readSources) of
+                  ([],_) -> doShift ASL Nothing
+                  ([addr],_) -> doShift ASL (Just addr)
+            "BIT" ->
+                case reads of
+                  [a] -> doBit a
+            "CPx" ->
+                case (reads,readSources) of
+                  ([a],reg : _) -> doCPx a reg
+            "CLx" ->
+                case writeSources of
+                  [r] -> cpuWithExpr r (Const 0) ec
+            "SBC" ->
+                case reads of
+                  [a] -> doSBC a
+            "SEx" ->
+                case writeSources of
+                  [r] -> cpuWithExpr r (Const 1) ec
+            "INC" ->
+                case reads of
+                  [addr] -> doINC 1 addr
+            "INx" ->
+                case writeSources of
+                  r : _ -> doINx 1 r
+            "DEC" ->
+                case reads of
+                  [addr] -> doINC (-1) addr
+            "DEx" ->
+                case writeSources of
+                  r : _ -> doINx (-1) r
+            "EOR" ->
+                case reads of
+                  [a] -> doLogical XOR a
+            "LDx" ->
+                case (writeSources,reads) of
+                  (reg : _,[addr]) -> doLDx reg addr
+            "LSR" ->
+                case (reads,readSources) of
+                  ([],_) -> doShift LSR Nothing
+                  ([addr],_) -> doShift LSR (Just addr)
+            "ROL" ->
+                case (reads,readSources) of
+                  ([],_) -> doROL Nothing
+                  ([addr],_) -> doROL (Just addr)
+            "RTS" ->
+                ec
+            "STx" ->
+                ec
+            "JSR" ->
+                ec
+            "Txx" ->
+                case (readSources,writeSources) of
+                  (from : _, into : _) -> doTransfer from into
+                                          
+            _ ->
+                foldr
+                (\r ec -> cpuWithExpr r (Instr name rme rre (exprOfCPU r ec)) ec)
+                ec
+                writeSources
+
+nm :: String -> CPU -> Mem -> [Int] -> [String] -> [Int] -> Mem
+nm name ec em reads readSources writes =
+    let rme = readMemoryExprs em reads in
+    let rre = readRegisterExprs ec readSources in
+    foldr (getSourceForWrite rme rre) em writes
+    where
+      doShift op addr =
+          let unshifted = getMem addr em in
+          let shifted = op unshifted in
+          setMem addr shifted em
+
+      doINC inc addr =
+          let prev = getMem addr em in
+          let post = applyIncrement inc prev in
+          setMem addr post em
+             
+      doROL addr =
+          let prev = getMem addr em in
+          let val = OR (exprOfCPU "C" ec) prev in
+          setMem addr val em
+
+      getSourceForWrite rme rre r em =
+          case name of
+            "ASL" ->
+                case reads of
+                  [addr] -> doShift ASL addr
+            "DEC" ->
+                case reads of
+                  [addr] -> doINC (-1) addr
+            "INC" ->
+                case reads of
+                  [addr] -> doINC 1 addr
+            "LDx" -> em
+            "ROL" ->
+                case reads of
+                  [addr] -> doROL addr
+                  _ -> em
+            "STx" ->
+                case readSources of
+                  reg : tl -> setMem r (exprOfCPU reg ec) em
+            "LSR" ->
+                case reads of
+                  [addr] -> doShift LSR addr
+            _ ->
+                setMem r (Instr name rme rre (getMem r em)) em

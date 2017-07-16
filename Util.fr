@@ -1,0 +1,15 @@
+module examples.Util where
+
+(&) x f = f x
+infixl 15 `&`
+
+nonempty a = a /= ""
+
+m2l v =
+    case v of
+      Nothing -> []
+      Just v -> [v]
+           
+genericToList a = map m2l (genericToMaybeList a) & concat
+
+withSnd a b = (a,b)
