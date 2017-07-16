@@ -26,7 +26,25 @@ doPreamble (Desc { mem = em, cpu = ec, sta = sta }) cpu =
         (prereq, cpu)
     else
         let future = M6502.next cpu in -- genericToList (M6502.futures cpu) in
-        doPreamble prereq future
+        doPreamble prereq future 
+
+doFrame (Desc { mem = em, cpu = ec, sta = sta }) cpu =
+    let pc = M6502.getPC () in
+    let bus = M6502.getCurrentBus cpu in
+    let reads = listFromArray (M6502.getReads cpu) in
+    let writes = listFromArray (M6502.getWrites cpu) in
+    let s = sources cpu in
+    let readSources = s & (map (readSource 'r')) & concat in
+    let writeSources = s & (map (readSource 'w')) & concat in
+    let i = M6502.getCurrentInstruction cpu in
+    let name = Instruction.getName i in
+    let nnc = nc name ec em reads readSources writeSources in
+    let nnm = nm name ec em reads readSources writes in
+    let prereq = Desc { mem = nnm, cpu = nnc, sta = (formatInstruction cpu) : sta } in
+    if reads == [640] then -- We read the joystick port
+        [(prereq, cpu)]
+    else
+        doFrame prereq (M6502.next cpu)
 
 quiet = 0xff0b80
 jsLeft = 0xbf0b80
@@ -45,15 +63,27 @@ printall l =
             stdout.print $ hd ++ "\n"
             printall tl
 
+doForAll f l =
+    case l of
+      hd : tl ->
+          do
+            f hd
+            doForAll f tl
+      [] ->
+          do
+            pure ()
+        
 main _ =
     let trick = Trick2600.new "snoop/Dragster.bin" in
     let cpu = M6502.setInput (M6502.withBus (M6502.new ()) trick) quiet in
     let (Desc { cpu = cd, mem = md, sta = sta },c) =
             doPreamble startupExprs cpu
     in
-    let (Desc { cpu = cf, mem = mf, sta = stf },f) =
-            doPreamble startFrame (M6502.next c)
-    in
+    let paths = doFrame startFrame (M6502.next c) in
     do
-      stdout.print $ "CPU\n" ++ (show cd) ++ "\nMEM\n" ++ (show md) ++ "\n"
-      stdout.print $ "CPU\n" ++ (show cf) ++ "\nMEM\n" ++ (show mf) ++ "\n"
+      doForAll
+        (\(Desc { cpu = cf, mem = mf, sta = sta },_) ->
+             do
+               stdout.print $ "CPU\n" ++ (show cf) ++ "\nMEM\n" ++ (show mf) ++ "\n"
+        )
+        paths
