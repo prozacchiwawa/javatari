@@ -393,6 +393,27 @@ public final class M6502 implements ClockDriven {
 		}
 	}
 
+	public M6502 withFlag(String f, boolean b) {
+		if (bus.getClass().isAssignableFrom(Trick2600.class)) {
+			Trick2600 t = (Trick2600) bus;
+			M6502State s = saveState();
+			if (f == "Z") {
+				s.ZERO = b;
+			} else if (f == "C") {
+				s.CARRY = b;
+			} else if (f == "V") {
+				s.OVERFLOW = b;
+			} else {
+				s.NEGATIVE = b;
+			}
+			M6502 c = new M6502();
+			c.loadState(s);
+			c.connectBus(t.clone());
+			return c;
+		}
+		return this;
+	}
+
 	public void step() {
 		currentInstruction = instructions(toUnsignedByte(bus.readByte(PC++)));	// Reads the instruction to be executed
 		currentInstruction.fetch();

@@ -66,7 +66,9 @@ derive Show (Mem2 a)
           
 type Mem = Mem2 (Mem2 Expr)
 
-data Desc = Desc { mem :: Mem, cpu :: CPU, sta :: [String] }
+data Branch = Branch { pc :: Int, flag :: String, val :: Expr }
+derive Show Branch
+data Desc = Desc { mem :: Mem, cpu :: CPU, sta :: [String], path :: [Branch] }
 derive Show Desc
     
 formatReadsInner :: Int -> Int -> JArray Int -> String
@@ -211,8 +213,8 @@ startFrameCpu =
     , d = PrevFrame
     }
 
-startupExprs = Desc { mem = startMem, cpu = startCpu, sta = [] }
-startFrame = Desc { mem = startFrameMem, cpu = startFrameCpu, sta = [] }
+startupExprs = Desc { mem = startMem, cpu = startCpu, sta = [], path = [] }
+startFrame = Desc { mem = startFrameMem, cpu = startFrameCpu, sta = [], path = [] }
 
 getA CPU { a = v, x = _, y = _, n = _, z = _, v = _, c = _, d = _ } = v
 getX CPU { a = _, x = v, y = _, n = _, z = _, v = _, c = _, d = _ } = v

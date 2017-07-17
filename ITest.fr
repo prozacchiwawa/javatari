@@ -3,27 +3,8 @@ module examples.ITest where
 
 import Prelude.PreludeArrays
 import Test.QuickCheck
-
-data Instruction = native org.javatari.general.m6502.Instruction where
-     pure native fetch :: Instruction -> Int
-     pure native toString :: Instruction -> String
-
-data M6502 = native org.javatari.general.m6502.M6502 where
-     pure native next :: M6502 -> M6502
-     pure native getInstructionSources :: M6502 -> JArray String
-     pure native withBus :: M6502 -> Trick2600 -> M6502
-     pure native getCurrentBus :: M6502 -> Trick2600
-     pure native getCurrentInstruction :: M6502 -> Instruction
-     pure native printState :: M6502 -> String
-     pure native setInput :: M6502 -> Int -> M6502
-     pure native getPC :: M6502 -> Int
-     pure native new :: () -> M6502
-
-data Trick2600 = native org.javatari.general.board.Trick2600 where
-     pure native getReads :: Trick2600 -> JArray Int
-     pure native getWrites :: Trick2600 -> JArray Int
-     pure native readByte :: Trick2600 -> Int -> Byte
-     pure native new :: String -> Trick2600
+import examples.Util
+import examples.FFI
 
 formatReadsInner :: Int -> Int -> JArray Int -> String
 formatReadsInner n l a =
@@ -58,8 +39,8 @@ formatInstruction :: M6502 -> String
 formatInstruction cpu =
     let i = M6502.getCurrentInstruction cpu in
     let bus = M6502.getCurrentBus cpu in
-    let reads = Trick2600.getReads bus in
-    let writes = Trick2600.getWrites bus in
+    let reads = M6502.getReads cpu in
+    let writes = M6502.getWrites cpu in
     let isrc =
             filter ((/=) "") (listFromArray (M6502.getInstructionSources cpu))
     in
@@ -67,7 +48,7 @@ formatInstruction cpu =
 
 doFrame cpu =
     let bus = M6502.getCurrentBus cpu in
-    let reads = listFromArray (Trick2600.getReads bus) in
+    let reads = listFromArray (M6502.getReads cpu) in
     if reads == [640] then -- Read js port
         do
           pure (False, cpu)
@@ -78,7 +59,7 @@ doFrame cpu =
 
 doPreamble cpu =
     let bus = M6502.getCurrentBus cpu in
-    let reads = listFromArray (Trick2600.getReads bus) in
+    let reads = listFromArray (M6502.getReads cpu) in
     if reads == [640] then -- We read the joystick port
         cpu
     else

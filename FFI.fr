@@ -17,6 +17,11 @@ data M6502 = native org.javatari.general.m6502.M6502 where
      pure native setInput :: M6502 -> Int -> M6502
      pure native getPC :: M6502 -> Int
      pure native futures :: M6502 -> JArray M6502
+     pure native isNEGATIVE :: M6502 -> Bool
+     pure native isOVERFLOW :: M6502 -> Bool
+     pure native isZERO :: M6502 -> Bool
+     pure native isCARRY :: M6502 -> Bool
+     pure native withFlag :: M6502 -> String -> Bool -> M6502
      pure native new :: () -> M6502
 
 data Trick2600 = native org.javatari.general.board.Trick2600 where

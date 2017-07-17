@@ -9,7 +9,7 @@ import examples.FFI
 import examples.Expr
 import examples.Instr
           
-doPreamble (Desc { mem = em, cpu = ec, sta = sta }) cpu =
+doPreamble (Desc { mem = em, cpu = ec, sta = sta, path = path }) cpu =
     let pc = M6502.getPC () in
     let bus = M6502.getCurrentBus cpu in
     let reads = listFromArray (M6502.getReads cpu) in
@@ -21,15 +21,15 @@ doPreamble (Desc { mem = em, cpu = ec, sta = sta }) cpu =
     let name = Instruction.getName i in
     let nnc = nc name ec em reads readSources writeSources in
     let nnm = nm name ec em reads readSources writes in
-    let prereq = Desc { mem = nnm, cpu = nnc, sta = (formatInstruction cpu) : sta } in
+    let prereq = Desc { mem = nnm, cpu = nnc, sta = (formatInstruction cpu) : sta, path = path } in
     if reads == [640] then -- We read the joystick port
         (prereq, cpu)
     else
         let future = M6502.next cpu in -- genericToList (M6502.futures cpu) in
         doPreamble prereq future 
 
-doFrame (Desc { mem = em, cpu = ec, sta = sta }) cpu =
-    let pc = M6502.getPC () in
+doFrame (Desc { mem = em, cpu = ec, sta = sta, path = path }) cpu =
+    let pc = M6502.getPC cpu in
     let bus = M6502.getCurrentBus cpu in
     let reads = listFromArray (M6502.getReads cpu) in
     let writes = listFromArray (M6502.getWrites cpu) in
@@ -40,11 +40,64 @@ doFrame (Desc { mem = em, cpu = ec, sta = sta }) cpu =
     let name = Instruction.getName i in
     let nnc = nc name ec em reads readSources writeSources in
     let nnm = nm name ec em reads readSources writes in
-    let prereq = Desc { mem = nnm, cpu = nnc, sta = (formatInstruction cpu) : sta } in
+    let prereq = Desc { mem = nnm, cpu = nnc, sta = (formatInstruction cpu) : sta, path = path } in
     if reads == [640] then -- We read the joystick port
         [(prereq, cpu)]
+    else if name == "Bxx" then
+        doBranch nnm nnc cpu sta path
     else
         doFrame prereq (M6502.next cpu)
+    where
+      getFlagValue flag cpu =
+          case flag of
+            "Z" -> M6502.isZERO cpu
+            "N" -> M6502.isNEGATIVE cpu
+            "C" -> M6502.isCARRY cpu
+            "V" -> M6502.isOVERFLOW cpu
+
+      produceBothFutures flag nnm nnc cpu sta path opcode =
+          let flagState = getFlagValue flag cpu in
+          let untakenState = not flagState in
+          let untakenCPU = M6502.withFlag cpu flag untakenState in
+          let future = M6502.next cpu in
+          let otherFuture = M6502.next untakenCPU in
+          []
+{-
+          map
+          (\(flag,cpu) ->
+               let prev = Desc { mem = nnm, cpu = nnc, sta = "Bxx opcode " ++ (show opcode) ++ " flag value " ++ flag : sta } in
+               
+          )
+-}
+      doBranch nnm nnc cpu sta path =
+          let bus = M6502.getCurrentBus cpu in
+          let pc = M6502.getPC cpu in
+          let opcode = Trick2600.readByte bus pc in
+          case Byte.unsigned opcode of
+            0x10 ->
+                -- BPL
+                produceBothFutures "N" nnm nnc cpu sta path opcode
+            0x30 ->
+                -- BMI
+                produceBothFutures "N" nnm nnc cpu sta path opcode
+            0x50 ->
+                -- BVC
+                produceBothFutures "V" nnm nnc cpu sta path opcode
+            0x70 ->
+                -- BVS
+                produceBothFutures "V" nnm nnc cpu sta path opcode
+            0x90 ->
+                -- BCC
+                produceBothFutures "C" nnm nnc cpu sta path opcode
+            0xb0 ->
+                -- BCS
+                produceBothFutures "C" nnm nnc cpu sta path opcode
+            0xd0 ->
+                -- BNE
+                produceBothFutures "Z" nnm nnc cpu sta path opcode
+            _    ->
+                -- BEQ
+                produceBothFutures "Z" nnm nnc cpu sta path opcode
 
 quiet = 0xff0b80
 jsLeft = 0xbf0b80
